@@ -1,6 +1,7 @@
 package eu.bukka.cli;
 
 import eu.bukka.service.CMSEncryptor;
+import eu.bukka.service.options.CMSEnvelopedDataOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -12,15 +13,15 @@ import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true,
         description = "Processing RFC 3852 Cryptographic Message Syntax (CMS).")
-public class CMSCommand implements Callable<Integer> {
+public class CMSCommand implements Callable<Integer>, CMSEnvelopedDataOptions {
     @Parameters(index = "0", description = "Mode")
     private String mode;
 
     @Option(names = {"-i", "--in"}, description = "Input file", required = true)
-    private File in;
+    private File inputFile;
 
     @Option(names = {"-o", "--out"}, description = "Output file")
-    private File out;
+    private File outputFile;
 
     @Option(names = {"-f", "--form"}, description = "Input and output form")
     private String form;
@@ -28,12 +29,41 @@ public class CMSCommand implements Callable<Integer> {
     @Option(names = {"-c", "--cipher"}, description = "Cipher to use")
     private String algorithm = "aes-256-cbc";
 
+    @Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
+    private String secretKey;
+
+    @Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
+    private String secretKeyIdentifier;
+
+    public File getInputFile() {
+        return inputFile;
+    }
+
+    public File getOutputFile() {
+        return outputFile;
+    }
+
+    public String getForm() {
+        return form;
+    }
+
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    public String getSecretKey() {
+        return secretKey;
+    }
+
+    public String getSecretKeyIdentifier() {
+        return secretKeyIdentifier;
+    }
+
     @Override
     public Integer call() throws Exception {
-        byte[] fileContents = Files.readAllBytes(in.toPath());
         switch (mode) {
-            case "encyrpt":
-                CMSEncryptor encryptor = new CMSEncryptor();
+            case "encrypt":
+                new CMSEncryptor().encrypt(this);
                 break;
             default:
                 throw new Exception("Unknown CMS mode: " + mode);
