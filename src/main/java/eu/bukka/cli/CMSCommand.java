@@ -1,14 +1,12 @@
 package eu.bukka.cli;
 
-import eu.bukka.service.CMSEncryptor;
-import eu.bukka.service.options.CMSEnvelopedDataOptions;
-import picocli.CommandLine;
+import eu.bukka.cms.CMSEnvelope;
+import eu.bukka.cms.options.CMSEnvelopedDataOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true,
@@ -63,7 +61,7 @@ public class CMSCommand implements Callable<Integer>, CMSEnvelopedDataOptions {
     public Integer call() throws Exception {
         switch (mode) {
             case "encrypt":
-                new CMSEncryptor().encrypt(this);
+                new CMSEnvelope(this).encrypt();
                 break;
             default:
                 throw new Exception("Unknown CMS mode: " + mode);

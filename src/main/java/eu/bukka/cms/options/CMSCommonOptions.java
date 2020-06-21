@@ -1,4 +1,4 @@
-package eu.bukka.service.options;
+package eu.bukka.cms.options;
 
 import java.io.File;
 
