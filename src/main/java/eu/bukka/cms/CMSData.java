@@ -1,6 +1,6 @@
 package eu.bukka.cms;
 
-import eu.bukka.cms.options.CMSEnvelopedDataOptions;
+import eu.bukka.cms.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cms.CMSAlgorithm;
 
@@ -9,9 +9,9 @@ import java.nio.file.Files;
 import java.security.InvalidParameterException;
 
 abstract public class CMSData {
-    protected CMSEnvelopedDataOptions options;
+    protected CMSEnvelopeOptions options;
 
-    public CMSData(CMSEnvelopedDataOptions options) {
+    public CMSData(CMSEnvelopeOptions options) {
         this.options = options;
     }
 

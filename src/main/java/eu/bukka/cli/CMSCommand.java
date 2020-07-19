@@ -1,7 +1,7 @@
 package eu.bukka.cli;
 
 import eu.bukka.cms.CMSEnvelope;
-import eu.bukka.cms.options.CMSEnvelopedDataOptions;
+import eu.bukka.cms.options.CMSEnvelopeOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true,
         description = "Processing RFC 3852 Cryptographic Message Syntax (CMS).")
-public class CMSCommand implements Callable<Integer>, CMSEnvelopedDataOptions {
+public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
     @Parameters(index = "0", description = "Mode")
     private String mode;
 

@@ -1,6 +1,6 @@
 package eu.bukka.cms.options;
 
-public interface CMSEnvelopedDataOptions extends CMSCommonOptions {
+public interface CMSEnvelopeOptions extends CMSCommonOptions {
     public String getAlgorithm();
 
     public String getSecretKey();
