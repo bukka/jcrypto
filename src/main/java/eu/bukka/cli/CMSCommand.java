@@ -22,7 +22,7 @@ public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
     private File outputFile;
 
     @Option(names = {"-f", "--form"}, description = "Input and output form")
-    private String form;
+    private String form = "PEM";
 
     @Option(names = {"-c", "--cipher"}, description = "Cipher to use")
     private String algorithm = "aes-256-cbc";

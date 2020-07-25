@@ -11,6 +11,12 @@ import java.security.InvalidParameterException;
 abstract public class CMSData {
     protected CMSEnvelopeOptions options;
 
+    protected enum Form {
+        DER,
+        PEM,
+        SMIME,
+    }
+
     public CMSData(CMSEnvelopeOptions options) {
         this.options = options;
     }
@@ -20,7 +26,8 @@ abstract public class CMSData {
     }
 
     protected ASN1ObjectIdentifier getAlgorithm() {
-        switch (options.getAlgorithm().toUpperCase()) {
+        String algorithm = options.getAlgorithm().toUpperCase();
+        switch (algorithm) {
             case "AES128_GCM":
             case "AES-128-GCM":
                 return CMSAlgorithm.AES128_GCM;
@@ -34,7 +41,21 @@ abstract public class CMSData {
             case "AES-256-CBC":
                 return CMSAlgorithm.AES256_CBC;
             default:
-                throw new InvalidParameterException("Invalid algorithm");
+                throw new InvalidParameterException("Invalid algorithm " + algorithm);
+        }
+    }
+
+    protected Form getForm() {
+        String form = options.getForm();
+        switch (form) {
+            case "DER":
+                return Form.DER;
+            case "PEM":
+                return Form.PEM;
+            case "SMIME":
+                return Form.SMIME;
+            default:
+                throw new InvalidParameterException("Invalid form " + form);
         }
     }
 }
