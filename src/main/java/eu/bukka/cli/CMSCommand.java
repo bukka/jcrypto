@@ -63,6 +63,9 @@ public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
             case "encrypt":
                 new CMSEnvelope(this).encrypt();
                 break;
+            case "decrypt":
+                new CMSEnvelope(this).decrypt();
+                break;
             default:
                 throw new Exception("Unknown CMS mode: " + mode);
         }

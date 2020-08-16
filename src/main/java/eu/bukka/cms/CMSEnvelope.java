@@ -4,11 +4,9 @@ import eu.bukka.cms.options.CMSEnvelopeOptions;
 import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.cms.ContentInfo;
-import org.bouncycastle.cms.CMSEnvelopedData;
-import org.bouncycastle.cms.CMSEnvelopedDataGenerator;
-import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.CMSProcessableByteArray;
+import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
+import org.bouncycastle.cms.jcajce.JceKEKEnvelopedRecipient;
 import org.bouncycastle.cms.jcajce.JceKEKRecipientInfoGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.util.Strings;
@@ -24,17 +22,24 @@ public class CMSEnvelope extends CMSData {
         super(options);
     }
 
+    private byte[] getSecretKeyId() {
+        return Strings.toByteArray(options.getSecretKeyIdentifier());
+    }
+
+    private SecretKey getSecretKey() {
+        return new SecretKeySpec(Hex.decode(options.getSecretKey()), "AES");
+    }
+
     public void encrypt() throws IOException, CMSException {
         CMSEnvelopedDataGenerator envGen = new CMSEnvelopedDataGenerator();
         if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
             // KEKRecipientInfo choice
-            byte[] keyID = Strings.toByteArray(options.getSecretKeyIdentifier());
-            SecretKey wrappingKey = new SecretKeySpec(Hex.decode(options.getSecretKey()), "AES");
             envGen.addRecipientInfoGenerator(
-                    new JceKEKRecipientInfoGenerator(keyID, wrappingKey).setProvider("BC"));
+                    new JceKEKRecipientInfoGenerator(getSecretKeyId(), getSecretKey())
+                            .setProvider("BC"));
         }
         CMSEnvelopedData envData = envGen.generate(
-            new CMSProcessableByteArray(getMessage()),
+            new CMSProcessableByteArray(getInputData()),
             new JceCMSContentEncryptorBuilder(getAlgorithm()).setProvider("BC").build());
         if (getForm() == Form.PEM) {
             ContentInfo ci = ContentInfo.getInstance(ASN1Sequence.fromByteArray(envData.getEncoded()));
@@ -43,6 +48,32 @@ public class CMSEnvelope extends CMSData {
             writer.close();
         } else {
             FileUtils.writeByteArrayToFile(options.getOutputFile(), envData.getEncoded());
+        }
+    }
+
+    private byte[] decryptKEK(CMSEnvelopedData envelopedData) throws CMSException {
+        RecipientInformationStore recipients = envelopedData.getRecipientInfos();
+        RecipientId rid = new KEKRecipientId(getSecretKeyId());
+        RecipientInformation recipient = recipients.get(rid);
+        return recipient.getContent(
+                new JceKEKEnvelopedRecipient(getSecretKey())
+                        .setProvider("BC"));
+    }
+
+    public void decrypt() throws IOException, CMSException {
+        CMSEnvelopedData envelopedData = new CMSEnvelopedData(getInputData());
+        byte[] decryptedData;
+        if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
+            decryptedData = decryptKEK(envelopedData);
+        } else {
+            throw new IllegalArgumentException("Invalid arguments");
+        }
+        if (getForm() == Form.PEM) {
+            JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
+            writer.write(Strings.fromByteArray(decryptedData));
+            writer.close();
+        } else {
+            FileUtils.writeByteArrayToFile(options.getOutputFile(), decryptedData);
         }
     }
 }

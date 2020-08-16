@@ -21,7 +21,7 @@ abstract public class CMSData {
         this.options = options;
     }
 
-    protected byte[] getMessage() throws IOException {
+    protected byte[] getInputData() throws IOException {
         return Files.readAllBytes(options.getInputFile().toPath());
     }
 
