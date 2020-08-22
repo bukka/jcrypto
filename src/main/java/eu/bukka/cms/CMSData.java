@@ -17,6 +17,29 @@ abstract public class CMSData {
         SMIME,
     }
 
+    protected class Algorithm {
+        private ASN1ObjectIdentifier identifier;
+        private boolean authenticated;
+
+        public Algorithm(ASN1ObjectIdentifier identifier, boolean authenticate) {
+            this.identifier = identifier;
+            this.authenticated = authenticate;
+        }
+
+        public Algorithm(ASN1ObjectIdentifier identifier) {
+            this.identifier = identifier;
+            this.authenticated = false;
+        }
+
+        public boolean isAuthenticated() {
+            return authenticated;
+        }
+
+        public ASN1ObjectIdentifier getIdentifier() {
+            return identifier;
+        }
+    }
+
     public CMSData(CMSEnvelopeOptions options) {
         this.options = options;
     }
@@ -25,21 +48,21 @@ abstract public class CMSData {
         return Files.readAllBytes(options.getInputFile().toPath());
     }
 
-    protected ASN1ObjectIdentifier getAlgorithm() {
+    protected Algorithm getAlgorithm() {
         String algorithm = options.getAlgorithm().toUpperCase();
         switch (algorithm) {
             case "AES128_GCM":
             case "AES-128-GCM":
-                return CMSAlgorithm.AES128_GCM;
+                return new Algorithm(CMSAlgorithm.AES128_GCM, true);
             case "AES256_GCM":
             case "AES-256-GCM":
-                return CMSAlgorithm.AES256_GCM;
+                return new Algorithm(CMSAlgorithm.AES256_GCM, true);
             case "AES128_CBC":
             case "AES-128-CBC":
-                return CMSAlgorithm.AES128_CBC;
+                return new Algorithm(CMSAlgorithm.AES128_CBC);
             case "AES256_CBC":
             case "AES-256-CBC":
-                return CMSAlgorithm.AES256_CBC;
+                return new Algorithm(CMSAlgorithm.AES256_CBC);
             default:
                 throw new InvalidParameterException("Invalid algorithm " + algorithm);
         }

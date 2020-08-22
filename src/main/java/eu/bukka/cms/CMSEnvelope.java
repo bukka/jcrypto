@@ -5,10 +5,13 @@ import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.cms.*;
+import org.bouncycastle.cms.bc.BcCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKEKEnvelopedRecipient;
 import org.bouncycastle.cms.jcajce.JceKEKRecipientInfoGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.operator.OutputAEADEncryptor;
+import org.bouncycastle.operator.OutputEncryptor;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -30,24 +33,46 @@ public class CMSEnvelope extends CMSData {
         return new SecretKeySpec(Hex.decode(options.getSecretKey()), "AES");
     }
 
+    private RecipientInfoGenerator getKEKRecipientInfoGenerator() {
+        return new JceKEKRecipientInfoGenerator(getSecretKeyId(), getSecretKey())
+                .setProvider("BC");
+    }
+
     public void encrypt() throws IOException, CMSException {
-        CMSEnvelopedDataGenerator envGen = new CMSEnvelopedDataGenerator();
+        RecipientInfoGenerator recipientInfoGenerator;
         if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
             // KEKRecipientInfo choice
-            envGen.addRecipientInfoGenerator(
-                    new JceKEKRecipientInfoGenerator(getSecretKeyId(), getSecretKey())
-                            .setProvider("BC"));
+            recipientInfoGenerator = getKEKRecipientInfoGenerator();
+        } else {
+            throw new CMSException("No recipient info");
         }
-        CMSEnvelopedData envData = envGen.generate(
-            new CMSProcessableByteArray(getInputData()),
-            new JceCMSContentEncryptorBuilder(getAlgorithm()).setProvider("BC").build());
+
+        byte[] encodedData;
+        CMSTypedData data = new CMSProcessableByteArray(getInputData());
+        Algorithm algorithm = getAlgorithm();
+        if (algorithm.isAuthenticated()) {
+            OutputEncryptor encryptor = new BcCMSContentEncryptorBuilder(algorithm.getIdentifier()).build();
+            CMSAuthEnvelopedDataGenerator authEnvDataGenerator = new CMSAuthEnvelopedDataGenerator();
+            authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
+            CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor)encryptor);
+            //TODO: wait for support for getting encoded data - this currently doesn't work.
+            // encodedData = authEnvData.getEncoded();
+            throw new CMSException("It is not possible encode auth enveloped data");
+        } else {
+            OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(algorithm.getIdentifier())
+                    .setProvider("BC").build();
+            CMSEnvelopedDataGenerator envDataGenerator = new CMSEnvelopedDataGenerator();
+            envDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
+            CMSEnvelopedData envData = envDataGenerator.generate(data, encryptor);
+            encodedData = envData.getEncoded();
+        }
         if (getForm() == Form.PEM) {
-            ContentInfo ci = ContentInfo.getInstance(ASN1Sequence.fromByteArray(envData.getEncoded()));
+            ContentInfo ci = ContentInfo.getInstance(ASN1Sequence.fromByteArray(encodedData));
             JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
             writer.writeObject(ci);
             writer.close();
         } else {
-            FileUtils.writeByteArrayToFile(options.getOutputFile(), envData.getEncoded());
+            FileUtils.writeByteArrayToFile(options.getOutputFile(), encodedData);
         }
     }
 
