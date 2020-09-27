@@ -1,4 +1,4 @@
-package eu.bukka.cms.options;
+package eu.bukka.options;
 
 public interface CMSEnvelopeOptions extends CMSCommonOptions {
     public String getAlgorithm();

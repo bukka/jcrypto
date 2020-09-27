@@ -1,6 +1,6 @@
 package eu.bukka.cms;
 
-import eu.bukka.cms.options.CMSEnvelopeOptions;
+import eu.bukka.options.CMSEnvelopeOptions;
 import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.cms.ContentInfo;

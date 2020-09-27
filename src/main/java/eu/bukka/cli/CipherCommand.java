@@ -1,7 +1,8 @@
 package eu.bukka.cli;
 
+import eu.bukka.cipher.CipherEnvelope;
 import eu.bukka.cms.CMSEnvelope;
-import eu.bukka.options.CMSEnvelopeOptions;
+import eu.bukka.options.CipherOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -9,11 +10,11 @@ import picocli.CommandLine.Parameters;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-@Command(name = "cms", mixinStandardHelpOptions = true,
-        description = "Processing RFC 3852 Cryptographic Message Syntax (CMS).")
-public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
-    @Parameters(index = "0", description = "Mode")
-    private String mode;
+@Command(name = "cipher", mixinStandardHelpOptions = true,
+        description = "Block and Stream ciphers.")
+public class CipherCommand implements Callable<Integer>, CipherOptions {
+    @Parameters(index = "0", description = "Action")
+    private String action;
 
     @Option(names = {"-i", "--in"}, description = "Input file", required = true)
     private File inputFile;
@@ -24,14 +25,14 @@ public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
     @Option(names = {"-f", "--form"}, description = "Input and output form")
     private String form = "PEM";
 
-    @Option(names = {"-c", "--cipher"}, description = "Cipher to use")
+    @Option(names = {"-a", "--algorithm"}, description = "Cipher algorithm to use")
     private String algorithm = "aes-256-cbc";
 
-    @Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
-    private String secretKey;
+    @Option(names = {"-k", "--key"}, description = "Raw key, in hex")
+    private String key;
 
-    @Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
-    private String secretKeyIdentifier;
+    @Option(names = {"--iv"}, description = "IV in hex")
+    private String iv;
 
     public File getInputFile() {
         return inputFile;
@@ -49,25 +50,25 @@ public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
         return algorithm;
     }
 
-    public String getSecretKey() {
-        return secretKey;
+    public String getKey() {
+        return key;
     }
 
-    public String getSecretKeyIdentifier() {
-        return secretKeyIdentifier;
+    public String getIv() {
+        return iv;
     }
 
     @Override
     public Integer call() throws Exception {
-        switch (mode) {
+        switch (action) {
             case "encrypt":
-                new CMSEnvelope(this).encrypt();
+                new CipherEnvelope(this).encrypt();
                 break;
             case "decrypt":
-                new CMSEnvelope(this).decrypt();
+                new CipherEnvelope(this).decrypt();
                 break;
             default:
-                throw new Exception("Unknown CMS mode: " + mode);
+                throw new Exception("Unknown cipher action: " + action);
         }
 
         return 0;

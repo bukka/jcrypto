@@ -1,6 +1,7 @@
 package eu.bukka;
 
 import eu.bukka.cli.CMSCommand;
+import eu.bukka.cli.CipherCommand;
 import eu.bukka.cli.TopCommand;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import picocli.CommandLine;
@@ -13,6 +14,7 @@ public class Main {
         Security.addProvider(new BouncyCastleProvider());
 
         CommandLine cmd = new CommandLine(new TopCommand())
+                .addSubcommand("cipher", new CipherCommand())
                 .addSubcommand("cms", new CMSCommand());
 
         int exitCode = cmd.execute(args);

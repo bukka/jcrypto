@@ -1,6 +1,6 @@
 package eu.bukka.cms;
 
-import eu.bukka.cms.options.CMSEnvelopeOptions;
+import eu.bukka.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cms.CMSAlgorithm;
 
