@@ -1,11 +1,16 @@
 package eu.bukka.options;
 
 import java.io.File;
+import java.io.IOException;
 
 public interface CommonOptions {
+    public String getForm();
+
     public File getInputFile();
+
+    public byte[] getInputData() throws IOException;
 
     public File getOutputFile();
 
-    public String getForm();
+    public void writeOutputData(byte[] data) throws IOException;
 }

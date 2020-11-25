@@ -6,4 +6,6 @@ public interface CipherOptions extends CommonOptions {
     public String getKey();
 
     public String getIv();
+
+    public String getPadding();
 }

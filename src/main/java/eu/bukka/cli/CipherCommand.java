@@ -1,50 +1,30 @@
 package eu.bukka.cli;
 
 import eu.bukka.cipher.CipherEnvelope;
-import eu.bukka.cms.CMSEnvelope;
 import eu.bukka.options.CipherOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 
 @Command(name = "cipher", mixinStandardHelpOptions = true,
         description = "Block and Stream ciphers.")
-public class CipherCommand implements Callable<Integer>, CipherOptions {
+public class CipherCommand extends CommonCommand implements Callable<Integer>, CipherOptions {
     @Parameters(index = "0", description = "Action")
     private String action;
-
-    @Option(names = {"-i", "--in"}, description = "Input file", required = true)
-    private File inputFile;
-
-    @Option(names = {"-o", "--out"}, description = "Output file")
-    private File outputFile;
-
-    @Option(names = {"-f", "--form"}, description = "Input and output form")
-    private String form = "PEM";
 
     @Option(names = {"-a", "--algorithm"}, description = "Cipher algorithm to use")
     private String algorithm = "aes-256-cbc";
 
-    @Option(names = {"-k", "--key"}, description = "Raw key, in hex")
+    @Option(names = {"-K", "--key"}, description = "Raw key, in hex")
     private String key;
+
+    @Option(names = {"--padding"}, description = "Padding to use if any")
+    private String padding;
 
     @Option(names = {"--iv"}, description = "IV in hex")
     private String iv;
-
-    public File getInputFile() {
-        return inputFile;
-    }
-
-    public File getOutputFile() {
-        return outputFile;
-    }
-
-    public String getForm() {
-        return form;
-    }
 
     public String getAlgorithm() {
         return algorithm;
@@ -56,6 +36,10 @@ public class CipherCommand implements Callable<Integer>, CipherOptions {
 
     public String getIv() {
         return iv;
+    }
+
+    public String getPadding() {
+        return padding;
     }
 
     @Override

@@ -4,8 +4,6 @@ import eu.bukka.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cms.CMSAlgorithm;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.security.InvalidParameterException;
 
 abstract public class CMSData {
@@ -42,10 +40,6 @@ abstract public class CMSData {
 
     public CMSData(CMSEnvelopeOptions options) {
         this.options = options;
-    }
-
-    protected byte[] getInputData() throws IOException {
-        return Files.readAllBytes(options.getInputFile().toPath());
     }
 
     protected Algorithm getAlgorithm() {

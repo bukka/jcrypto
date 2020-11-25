@@ -48,7 +48,7 @@ public class CMSEnvelope extends CMSData {
         }
 
         byte[] encodedData;
-        CMSTypedData data = new CMSProcessableByteArray(getInputData());
+        CMSTypedData data = new CMSProcessableByteArray(options.getInputData());
         Algorithm algorithm = getAlgorithm();
         if (algorithm.isAuthenticated()) {
             OutputEncryptor encryptor = new BcCMSContentEncryptorBuilder(algorithm.getIdentifier()).build();
@@ -72,7 +72,7 @@ public class CMSEnvelope extends CMSData {
             writer.writeObject(ci);
             writer.close();
         } else {
-            FileUtils.writeByteArrayToFile(options.getOutputFile(), encodedData);
+            options.writeOutputData(encodedData);
         }
     }
 
@@ -86,7 +86,7 @@ public class CMSEnvelope extends CMSData {
     }
 
     public void decrypt() throws IOException, CMSException {
-        CMSEnvelopedData envelopedData = new CMSEnvelopedData(getInputData());
+        CMSEnvelopedData envelopedData = new CMSEnvelopedData(options.getInputData());
         byte[] decryptedData;
         if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
             decryptedData = decryptKEK(envelopedData);
@@ -98,7 +98,7 @@ public class CMSEnvelope extends CMSData {
             writer.write(Strings.fromByteArray(decryptedData));
             writer.close();
         } else {
-            FileUtils.writeByteArrayToFile(options.getOutputFile(), decryptedData);
+            options.writeOutputData(decryptedData);
         }
     }
 }

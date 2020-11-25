@@ -6,23 +6,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true,
         description = "Processing RFC 3852 Cryptographic Message Syntax (CMS).")
-public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
+public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSEnvelopeOptions {
     @Parameters(index = "0", description = "Mode")
     private String mode;
-
-    @Option(names = {"-i", "--in"}, description = "Input file", required = true)
-    private File inputFile;
-
-    @Option(names = {"-o", "--out"}, description = "Output file")
-    private File outputFile;
-
-    @Option(names = {"-f", "--form"}, description = "Input and output form")
-    private String form = "PEM";
 
     @Option(names = {"-c", "--cipher"}, description = "Cipher to use")
     private String algorithm = "aes-256-cbc";
@@ -32,18 +22,6 @@ public class CMSCommand implements Callable<Integer>, CMSEnvelopeOptions {
 
     @Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
     private String secretKeyIdentifier;
-
-    public File getInputFile() {
-        return inputFile;
-    }
-
-    public File getOutputFile() {
-        return outputFile;
-    }
-
-    public String getForm() {
-        return form;
-    }
 
     public String getAlgorithm() {
         return algorithm;
