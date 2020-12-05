@@ -74,6 +74,10 @@ public class CipherAlgorithm {
         return cipher;
     }
 
+    public boolean hasIv() {
+        return !mode.equals("ECB");
+    }
+
     public String transform() {
         return String.format("%s/%s/%s", cipher, mode, padding);
     }
