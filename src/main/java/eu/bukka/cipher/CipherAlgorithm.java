@@ -1,8 +1,6 @@
 package eu.bukka.cipher;
 
-import eu.bukka.cms.CMSData;
 import eu.bukka.options.CipherOptions;
-import org.bouncycastle.cms.CMSAlgorithm;
 
 import java.security.InvalidParameterException;
 
@@ -63,10 +61,10 @@ public class CipherAlgorithm {
                 return new CipherAlgorithm("CRT");
             case "AES128_ECB":
             case "AES-128-ECB":
-                return new CipherAlgorithm("EBC", 128);
+                return new CipherAlgorithm("ECB", 128);
             case "AES256_ECB":
             case "AES-256-ECB":
-                return new CipherAlgorithm("EBC");
+                return new CipherAlgorithm("ECB");
             default:
                 throw new InvalidParameterException("Invalid algorithm " + algorithm);
         }
