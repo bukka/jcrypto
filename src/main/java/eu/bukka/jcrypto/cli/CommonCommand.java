@@ -34,7 +34,11 @@ public class CommonCommand implements CommonOptions {
         return Files.readAllBytes(getInputFile().toPath());
     }
 
+    public void writeData(File dataFile, byte[] data) throws IOException {
+        FileUtils.writeByteArrayToFile(dataFile, data);
+    }
+
     public void writeOutputData(byte[] data) throws IOException {
-        FileUtils.writeByteArrayToFile(getOutputFile(), data);
+        writeData(getOutputFile(), data);
     }
 }

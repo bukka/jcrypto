@@ -6,6 +6,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 @Command(name = "cipher", mixinStandardHelpOptions = true,
@@ -26,6 +27,9 @@ public class CipherCommand extends CommonCommand implements Callable<Integer>, C
     @Option(names = {"--iv"}, description = "IV in hex")
     private String iv;
 
+    @Option(names = {"--iv-out"}, description = "IV output file")
+    private File ivOutputFile;
+
     public String getAlgorithm() {
         return algorithm;
     }
@@ -36,6 +40,10 @@ public class CipherCommand extends CommonCommand implements Callable<Integer>, C
 
     public String getIv() {
         return iv;
+    }
+
+    public File getIvOutputFile() {
+        return ivOutputFile;
     }
 
     public String getPadding() {

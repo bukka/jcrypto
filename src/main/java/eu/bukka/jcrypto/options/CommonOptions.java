@@ -12,5 +12,7 @@ public interface CommonOptions {
 
     public File getOutputFile();
 
+    public void writeData(File dataFile, byte[] data) throws IOException;
+
     public void writeOutputData(byte[] data) throws IOException;
 }

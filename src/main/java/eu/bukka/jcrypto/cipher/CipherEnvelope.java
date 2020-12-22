@@ -8,6 +8,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.InvalidParameterException;
 
 public class CipherEnvelope {
     protected CipherOptions options;
@@ -24,11 +25,21 @@ public class CipherEnvelope {
         SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
 
         if (algorithm.hasIv()) {
-            cipher.init(opmode, key, new IvParameterSpec(Hex.decode(options.getIv())));
+            if (options.getIv() == null) {
+                if (opmode == Cipher.DECRYPT_MODE) {
+                    throw new InvalidParameterException("Decryption algorithm requires IV");
+                }
+                cipher.init(opmode, key);
+            } else {
+                cipher.init(opmode, key, new IvParameterSpec(Hex.decode(options.getIv())));
+            }
         } else {
             cipher.init(opmode, key);
         }
         options.writeOutputData(cipher.doFinal(options.getInputData()));
+        if (options.getIvOutputFile() != null) {
+            options.writeData(options.getIvOutputFile(), cipher.getIV());
+        }
     }
 
     public void encrypt() throws IOException, GeneralSecurityException {
