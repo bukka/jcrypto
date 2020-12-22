@@ -1,4 +1,4 @@
-package eu.bukka.options;
+package eu.bukka.jcrypto.options;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,7 +1,6 @@
-package eu.bukka.cms;
+package eu.bukka.jcrypto.cms;
 
-import eu.bukka.options.CMSEnvelopeOptions;
-import org.apache.commons.io.FileUtils;
+import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.cms.*;

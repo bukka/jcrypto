@@ -1,6 +1,6 @@
-package eu.bukka.cipher;
+package eu.bukka.jcrypto.cipher;
 
-import eu.bukka.options.CipherOptions;
+import eu.bukka.jcrypto.options.CipherOptions;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.Cipher;

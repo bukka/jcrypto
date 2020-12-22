@@ -1,4 +1,4 @@
-package eu.bukka.cipher;
+package eu.bukka.jcrypto.cipher;
 
 import org.junit.jupiter.api.Test;
 

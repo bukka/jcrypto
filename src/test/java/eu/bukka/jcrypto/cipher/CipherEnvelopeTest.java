@@ -1,26 +1,12 @@
-package eu.bukka.cipher;
+package eu.bukka.jcrypto.cipher;
 
-import eu.bukka.options.CipherOptions;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.jupiter.api.BeforeAll;
+import eu.bukka.jcrypto.options.CipherOptions;
+import eu.bukka.jcrypto.test.CommonTest;
 import org.junit.jupiter.api.Test;
-
-import java.math.BigInteger;
-import java.security.Security;
 
 import static org.mockito.Mockito.*;
 
-class CipherEnvelopeTest {
-
-    @BeforeAll
-    static void setUp() {
-        Security.addProvider(new BouncyCastleProvider());
-    }
-
-    private byte[] bytes(String hex) {
-        return new BigInteger(hex, 16).toByteArray();
-    }
-
+class CipherEnvelopeTest extends CommonTest {
     @Test
     void encryptUsingAES128ECB() throws Exception {
         String key = "2b7e151628aed2a6abf7158809cf4f3c";

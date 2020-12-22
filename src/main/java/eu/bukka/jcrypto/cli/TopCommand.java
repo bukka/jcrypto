@@ -1,4 +1,4 @@
-package eu.bukka.cli;
+package eu.bukka.jcrypto.cli;
 
 import picocli.CommandLine;
 

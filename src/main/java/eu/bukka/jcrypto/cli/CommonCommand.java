@@ -1,6 +1,6 @@
-package eu.bukka.cli;
+package eu.bukka.jcrypto.cli;
 
-import eu.bukka.options.CommonOptions;
+import eu.bukka.jcrypto.options.CommonOptions;
 import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 

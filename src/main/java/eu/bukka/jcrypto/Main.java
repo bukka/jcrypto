@@ -1,8 +1,8 @@
-package eu.bukka;
+package eu.bukka.jcrypto;
 
-import eu.bukka.cli.CMSCommand;
-import eu.bukka.cli.CipherCommand;
-import eu.bukka.cli.TopCommand;
+import eu.bukka.jcrypto.cli.CMSCommand;
+import eu.bukka.jcrypto.cli.CipherCommand;
+import eu.bukka.jcrypto.cli.TopCommand;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import picocli.CommandLine;
 

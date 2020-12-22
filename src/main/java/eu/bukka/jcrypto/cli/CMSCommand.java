@@ -1,7 +1,7 @@
-package eu.bukka.cli;
+package eu.bukka.jcrypto.cli;
 
-import eu.bukka.cms.CMSEnvelope;
-import eu.bukka.options.CMSEnvelopeOptions;
+import eu.bukka.jcrypto.cms.CMSEnvelope;
+import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

@@ -1,7 +1,7 @@
-package eu.bukka.cli;
+package eu.bukka.jcrypto.cli;
 
-import eu.bukka.cipher.CipherEnvelope;
-import eu.bukka.options.CipherOptions;
+import eu.bukka.jcrypto.cipher.CipherEnvelope;
+import eu.bukka.jcrypto.options.CipherOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

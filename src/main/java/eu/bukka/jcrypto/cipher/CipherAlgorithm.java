@@ -1,6 +1,6 @@
-package eu.bukka.cipher;
+package eu.bukka.jcrypto.cipher;
 
-import eu.bukka.options.CipherOptions;
+import eu.bukka.jcrypto.options.CipherOptions;
 
 import java.security.InvalidParameterException;
 
