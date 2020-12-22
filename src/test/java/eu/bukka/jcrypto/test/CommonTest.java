@@ -16,4 +16,8 @@ public class CommonTest {
     protected byte[] bytes(String hex) {
         return new BigInteger(hex, 16).toByteArray();
     }
+
+    protected String hex(byte[] data) {
+        return new BigInteger(1, data).toString(16);
+    }
 }

@@ -16,7 +16,7 @@ public class CipherEnvelope {
         this.options = options;
     }
 
-    public void encrypt() throws IOException, GeneralSecurityException {
+    private void crypt(int opmode) throws IOException, GeneralSecurityException {
         CipherAlgorithm algorithm = CipherAlgorithm.fromOptions(options);
         Cipher cipher = Cipher.getInstance(algorithm.transform(), "BC");
 
@@ -24,14 +24,18 @@ public class CipherEnvelope {
         SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
 
         if (algorithm.hasIv()) {
-            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(Hex.decode(options.getIv())));
+            cipher.init(opmode, key, new IvParameterSpec(Hex.decode(options.getIv())));
         } else {
-            cipher.init(Cipher.ENCRYPT_MODE, key);
+            cipher.init(opmode, key);
         }
         options.writeOutputData(cipher.doFinal(options.getInputData()));
     }
 
-    public void decrypt() throws IOException {
+    public void encrypt() throws IOException, GeneralSecurityException {
+        crypt(Cipher.ENCRYPT_MODE);
+    }
 
+    public void decrypt() throws IOException, GeneralSecurityException {
+        crypt(Cipher.DECRYPT_MODE);
     }
 }
