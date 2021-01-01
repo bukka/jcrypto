@@ -1,8 +1,16 @@
 package eu.bukka.jcrypto.cipher;
 
+import eu.bukka.jcrypto.options.CipherOptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CipherAlgorithmTest {
 
@@ -10,6 +18,12 @@ class CipherAlgorithmTest {
     void transform() {
         CipherAlgorithm algorithm = new CipherAlgorithm("AES", "CBC", "NoPadding", 128);
         assertEquals("AES/CBC/NoPadding", algorithm.transform());
+    }
+
+    @Test
+    void getKeySize() {
+        CipherAlgorithm algorithm = new CipherAlgorithm("AES", "CBC", "NoPadding", 256);
+        assertEquals(256, algorithm.getKeySize());
     }
 
     @Test
@@ -22,5 +36,31 @@ class CipherAlgorithmTest {
     void hasIv() {
         assertTrue(new CipherAlgorithm("AES", "CBC").hasIv(), "The CBC mode has IV");
         assertFalse(new CipherAlgorithm("AES", "ECB").hasIv(), "The ECB mode does not have IV");
+    }
+
+    @ParameterizedTest
+    @MethodSource("cipherAlgorithmProvider")
+    void fromOptions(String algorithm, String padding, String cipher, int keySize) {
+        CipherOptions options = mock(CipherOptions.class);
+        when(options.getAlgorithm()).thenReturn(algorithm);
+        when(options.getPadding()).thenReturn(padding);
+
+        CipherAlgorithm cipherAlgorithm = CipherAlgorithm.fromOptions(options);
+
+        assertEquals(cipher, cipherAlgorithm.transform());
+        assertEquals(keySize, cipherAlgorithm.getKeySize());
+    }
+
+    static Stream<Arguments> cipherAlgorithmProvider() {
+        return Stream.of(
+                Arguments.of("AES128_CCM", "NoPadding", "AES/CCM/NoPadding", 128),
+                Arguments.of("AES256_CCM", "PKCS5Padding", "AES/CCM/PKCS5Padding", 256),
+                Arguments.of("AES-128-GCM", "NoPadding", "AES/GCM/NoPadding", 128),
+                Arguments.of("aes-256-gcm", "PKCS5Padding", "AES/GCM/PKCS5Padding", 256),
+                Arguments.of("AES128_CBC", "NoPadding", "AES/CBC/NoPadding", 128),
+                Arguments.of("AES-256-CBC", "PKCS5Padding", "AES/CBC/PKCS5Padding", 256),
+                Arguments.of("AES-128-CRT", "NoPadding", "AES/CRT/NoPadding", 128),
+                Arguments.of("aes-256-crt", "PKCS5Padding", "AES/CRT/PKCS5Padding", 256)
+        );
     }
 }

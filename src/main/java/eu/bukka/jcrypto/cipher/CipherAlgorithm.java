@@ -17,7 +17,7 @@ public class CipherAlgorithm {
         this.cipher = cipher;
         this.mode = mode;
         this.keySize = keySize;
-        this.padding = padding;
+        this.padding = padding != null ? padding : "PKCS5Padding";
     }
 
     public CipherAlgorithm(String cipher, String mode) {
@@ -34,44 +34,59 @@ public class CipherAlgorithm {
 
     public static CipherAlgorithm fromOptions(CipherOptions options) {
         String algorithm = options.getAlgorithm().toUpperCase();
+        String padding = options.getPadding();
+        String mode;
+        String cipher = "AES";
+        int keySize = 256;
         switch (algorithm) {
             case "AES128_CCM":
             case "AES-128-CCM":
-                return new CipherAlgorithm("CCM", 128);
+                keySize = 128;
             case "AES256_CCM":
-            case "AES-258-CCM":
-                return new CipherAlgorithm("CCM");
+            case "AES-256-CCM":
+                mode = "CCM";
+                break;
             case "AES128_GCM":
             case "AES-128-GCM":
-                return new CipherAlgorithm("GCM", 128);
+                keySize = 128;
             case "AES256_GCM":
             case "AES-256-GCM":
-                return new CipherAlgorithm("GCM");
+                mode = "GCM";
+                break;
             case "AES128_CBC":
             case "AES-128-CBC":
-                return new CipherAlgorithm("CBC", 128);
+                keySize = 128;
             case "AES256_CBC":
-            case "AES-258-CBC":
-                return new CipherAlgorithm("CBC");
+            case "AES-256-CBC":
+                mode = "CBC";
+                break;
             case "AES128_CRT":
             case "AES-128-CRT":
-                return new CipherAlgorithm("CRT", 128);
+                keySize = 128;
             case "AES256_CRT":
-            case "AES-258-CRT":
-                return new CipherAlgorithm("CRT");
+            case "AES-256-CRT":
+                mode = "CRT";
+                break;
             case "AES128_ECB":
             case "AES-128-ECB":
-                return new CipherAlgorithm("ECB", 128);
+                keySize = 128;
             case "AES256_ECB":
             case "AES-256-ECB":
-                return new CipherAlgorithm("ECB");
+                mode = "ECB";
+                break;
             default:
                 throw new InvalidParameterException("Invalid algorithm " + algorithm);
         }
+
+        return new CipherAlgorithm(cipher, mode, padding, keySize);
     }
 
     public String getCipher() {
         return cipher;
+    }
+
+    public int getKeySize() {
+        return keySize;
     }
 
     public boolean hasIv() {
