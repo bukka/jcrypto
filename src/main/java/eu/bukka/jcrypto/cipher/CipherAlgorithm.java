@@ -6,7 +6,7 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 public class CipherAlgorithm {
-    final private String[] STREAM_MODES = {"CRT", "OFB", "CFB"};
+    final private String[] STREAM_MODES = {"CTR", "OFB", "CFB"};
 
     private String cipher;
 
@@ -66,12 +66,12 @@ public class CipherAlgorithm {
             case "AES-256-CBC":
                 mode = "CBC";
                 break;
-            case "AES128_CRT":
-            case "AES-128-CRT":
+            case "AES128_CTR":
+            case "AES-128-CTR":
                 keySize = 128;
-            case "AES256_CRT":
-            case "AES-256-CRT":
-                mode = "CRT";
+            case "AES256_CTR":
+            case "AES-256-CTR":
+                mode = "CTR";
                 break;
             case "AES128_CFB":
             case "AES-128-CFB":

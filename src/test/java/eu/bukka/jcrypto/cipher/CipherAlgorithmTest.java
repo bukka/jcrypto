@@ -36,7 +36,7 @@ class CipherAlgorithmTest {
     @Test
     void isStreamMode() {
         assertFalse(new CipherAlgorithm("AES", "CBC").isStreamMode());
-        assertTrue(new CipherAlgorithm("AES", "CRT").isStreamMode());
+        assertTrue(new CipherAlgorithm("AES", "CTR").isStreamMode());
     }
 
 
@@ -49,7 +49,7 @@ class CipherAlgorithmTest {
     @Test
     void throwIfPaddingSetForStreamMode() {
         Exception exception = assertThrows(InvalidParameterException.class, () -> {
-            new CipherAlgorithm("AES", "CRT", "PKCS5Padding", 256);
+            new CipherAlgorithm("AES", "CTR", "PKCS5Padding", 256);
         });
         assertEquals("Padding is not used for stream mode", exception.getMessage());
     }
@@ -75,8 +75,8 @@ class CipherAlgorithmTest {
                 Arguments.of("aes-256-gcm", "PKCS5Padding", "AES/GCM/PKCS5Padding", 256),
                 Arguments.of("AES128_CBC", "NoPadding", "AES/CBC/NoPadding", 128),
                 Arguments.of("AES-256-CBC", "PKCS5Padding", "AES/CBC/PKCS5Padding", 256),
-                Arguments.of("AES-128-CRT", "NoPadding", "AES/CRT/NoPadding", 128),
-                Arguments.of("aes-256-crt", "NoPadding", "AES/CRT/NoPadding", 256),
+                Arguments.of("AES-128-CTR", "NoPadding", "AES/CTR/NoPadding", 128),
+                Arguments.of("aes-256-ctr", "NoPadding", "AES/CTR/NoPadding", 256),
                 Arguments.of("AES-128-CFB", "NoPadding", "AES/CFB/NoPadding", 128),
                 Arguments.of("aes256_cfb", "NoPadding", "AES/CFB/NoPadding", 256),
                 Arguments.of("AES-128-OFB", "NoPadding", "AES/OFB/NoPadding", 128),
