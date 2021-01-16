@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.security.InvalidParameterException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,9 +34,24 @@ class CipherAlgorithmTest {
     }
 
     @Test
+    void isStreamMode() {
+        assertFalse(new CipherAlgorithm("AES", "CBC").isStreamMode());
+        assertTrue(new CipherAlgorithm("AES", "CRT").isStreamMode());
+    }
+
+
+    @Test
     void hasIv() {
         assertTrue(new CipherAlgorithm("AES", "CBC").hasIv(), "The CBC mode has IV");
         assertFalse(new CipherAlgorithm("AES", "ECB").hasIv(), "The ECB mode does not have IV");
+    }
+
+    @Test
+    void throwIfPaddingSetForStreamMode() {
+        Exception exception = assertThrows(InvalidParameterException.class, () -> {
+            new CipherAlgorithm("AES", "CRT", "PKCS5Padding", 256);
+        });
+        assertEquals("Padding is not used for stream mode", exception.getMessage());
     }
 
     @ParameterizedTest
@@ -60,7 +76,11 @@ class CipherAlgorithmTest {
                 Arguments.of("AES128_CBC", "NoPadding", "AES/CBC/NoPadding", 128),
                 Arguments.of("AES-256-CBC", "PKCS5Padding", "AES/CBC/PKCS5Padding", 256),
                 Arguments.of("AES-128-CRT", "NoPadding", "AES/CRT/NoPadding", 128),
-                Arguments.of("aes-256-crt", "PKCS5Padding", "AES/CRT/PKCS5Padding", 256)
+                Arguments.of("aes-256-crt", "NoPadding", "AES/CRT/NoPadding", 256),
+                Arguments.of("AES-128-CFB", "NoPadding", "AES/CFB/NoPadding", 128),
+                Arguments.of("aes256_cfb", "NoPadding", "AES/CFB/NoPadding", 256),
+                Arguments.of("AES-128-OFB", "NoPadding", "AES/OFB/NoPadding", 128),
+                Arguments.of("AES256_ofb", "NoPadding", "AES/OFB/NoPadding", 256)
         );
     }
 }

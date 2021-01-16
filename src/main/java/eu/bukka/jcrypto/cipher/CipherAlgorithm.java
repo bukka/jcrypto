@@ -3,8 +3,11 @@ package eu.bukka.jcrypto.cipher;
 import eu.bukka.jcrypto.options.CipherOptions;
 
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 
 public class CipherAlgorithm {
+    final private String[] STREAM_MODES = {"CRT", "OFB", "CFB"};
+
     private String cipher;
 
     private String mode;
@@ -17,7 +20,10 @@ public class CipherAlgorithm {
         this.cipher = cipher;
         this.mode = mode;
         this.keySize = keySize;
-        this.padding = padding != null ? padding : "PKCS5Padding";
+        this.padding = padding != null ? padding : "NoPadding";
+        if (isStreamMode() && padding != "NoPadding") {
+            throw new InvalidParameterException("Padding is not used for stream mode");
+        }
     }
 
     public CipherAlgorithm(String cipher, String mode) {
@@ -67,6 +73,20 @@ public class CipherAlgorithm {
             case "AES-256-CRT":
                 mode = "CRT";
                 break;
+            case "AES128_CFB":
+            case "AES-128-CFB":
+                keySize = 128;
+            case "AES256_CFB":
+            case "AES-256-CFB":
+                mode = "CFB";
+                break;
+            case "AES128_OFB":
+            case "AES-128-OFB":
+                keySize = 128;
+            case "AES256_OFB":
+            case "AES-256-OFB":
+                mode = "OFB";
+                break;
             case "AES128_ECB":
             case "AES-128-ECB":
                 keySize = 128;
@@ -91,6 +111,10 @@ public class CipherAlgorithm {
 
     public boolean hasIv() {
         return !mode.equals("ECB");
+    }
+
+    public boolean isStreamMode() {
+        return Arrays.asList(STREAM_MODES).contains(mode);
     }
 
     public String transform() {
