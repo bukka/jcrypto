@@ -54,6 +54,26 @@ class CipherAlgorithmTest {
         assertEquals("Padding is not used for stream mode", exception.getMessage());
     }
 
+    @Test
+    void throwIfEmptyAlgorithm() {
+        Exception exception = assertThrows(InvalidParameterException.class, () -> {
+            CipherOptions options = mock(CipherOptions.class);
+            when(options.getAlgorithm()).thenReturn("");
+            CipherAlgorithm.fromOptions(options);
+        });
+        assertEquals("Algorithm cannot be an empty string", exception.getMessage());
+    }
+
+    @Test
+    void throwIfInvalidAlgorithm() {
+        Exception exception = assertThrows(InvalidParameterException.class, () -> {
+            CipherOptions options = mock(CipherOptions.class);
+            when(options.getAlgorithm()).thenReturn("A/B/C/D");
+            CipherAlgorithm.fromOptions(options);
+        });
+        assertEquals("Invalid algorithm A/B/C/D", exception.getMessage());
+    }
+
     @ParameterizedTest
     @MethodSource("cipherAlgorithmProvider")
     void fromOptions(String algorithm, String padding, String cipher, int keySize) {
@@ -80,7 +100,10 @@ class CipherAlgorithmTest {
                 Arguments.of("AES-128-CFB", "NoPadding", "AES/CFB/NoPadding", 128),
                 Arguments.of("aes256_cfb", "NoPadding", "AES/CFB/NoPadding", 256),
                 Arguments.of("AES-128-OFB", "NoPadding", "AES/OFB/NoPadding", 128),
-                Arguments.of("AES256_ofb", "NoPadding", "AES/OFB/NoPadding", 256)
+                Arguments.of("AES/GCM/PKCS5Padding", "NoPadding", "AES/GCM/PKCS5Padding", 0),
+                Arguments.of("AES/CBC/NoPadding", "NoPadding", "AES/CBC/NoPadding", 0),
+                Arguments.of("AES/CCM", "PKCS5Padding", "AES/CCM/PKCS5Padding", 0),
+                Arguments.of("CBC", "NoPadding", "AES/CBC/NoPadding", 0)
         );
     }
 }

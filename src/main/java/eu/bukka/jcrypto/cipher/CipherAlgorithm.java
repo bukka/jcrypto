@@ -8,12 +8,24 @@ import java.util.Arrays;
 public class CipherAlgorithm {
     final private String[] STREAM_MODES = {"CTR", "OFB", "CFB"};
 
+    /**
+     * The cipher name (e.g. AES)
+     */
     private String cipher;
 
+    /**
+     * Streaming block mode
+     */
     private String mode;
 
+    /**
+     * Cipher padding (e.g. NoPadding or PKCS5Padding)
+     */
     private String padding;
 
+    /**
+     * The key size or 0 if unspecified (taken from the key length)
+     */
     private int keySize;
 
     public CipherAlgorithm(String cipher, String mode, String padding, int keySize) {
@@ -39,12 +51,15 @@ public class CipherAlgorithm {
     }
 
     public static CipherAlgorithm fromOptions(CipherOptions options) {
-        String algorithm = options.getAlgorithm().toUpperCase();
+        String algorithm = options.getAlgorithm();
+        if (algorithm == null || algorithm.length() == 0) {
+            throw new InvalidParameterException("Algorithm cannot be an empty string");
+        }
         String padding = options.getPadding();
         String mode;
         String cipher = "AES";
         int keySize = 256;
-        switch (algorithm) {
+        switch (algorithm.toUpperCase()) {
             case "AES128_CCM":
             case "AES-128-CCM":
                 keySize = 128;
@@ -95,7 +110,21 @@ public class CipherAlgorithm {
                 mode = "ECB";
                 break;
             default:
-                throw new InvalidParameterException("Invalid algorithm " + algorithm);
+                // try BC based format
+                keySize = 0;
+                String[] parts = algorithm.split("/");
+                if (parts.length > 3) {
+                    throw new InvalidParameterException("Invalid algorithm " + algorithm);
+                }
+                if (parts.length > 2) {
+                    padding = parts[2];
+                }
+                if (parts.length > 1) {
+                    cipher = parts[0];
+                    mode = parts[1];
+                } else {
+                    mode = parts[0];
+                }
         }
 
         return new CipherAlgorithm(cipher, mode, padding, keySize);
