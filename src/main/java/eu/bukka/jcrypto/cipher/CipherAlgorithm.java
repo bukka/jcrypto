@@ -56,7 +56,7 @@ public class CipherAlgorithm {
             throw new InvalidParameterException("Algorithm cannot be an empty string");
         }
         String padding = options.getPadding();
-        String mode;
+        String mode = null;
         String cipher = "AES";
         int keySize = 256;
         switch (algorithm.toUpperCase()) {
@@ -120,11 +120,9 @@ public class CipherAlgorithm {
                     padding = parts[2];
                 }
                 if (parts.length > 1) {
-                    cipher = parts[0];
                     mode = parts[1];
-                } else {
-                    mode = parts[0];
                 }
+                cipher = parts[0];
         }
 
         return new CipherAlgorithm(cipher, mode, padding, keySize);
@@ -147,6 +145,6 @@ public class CipherAlgorithm {
     }
 
     public String transform() {
-        return String.format("%s/%s/%s", cipher, mode, padding);
+        return mode == null ? cipher : String.format("%s/%s/%s", cipher, mode, padding);
     }
 }

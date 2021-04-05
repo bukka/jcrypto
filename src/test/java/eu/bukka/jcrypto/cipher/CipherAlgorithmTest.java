@@ -103,7 +103,7 @@ class CipherAlgorithmTest {
                 Arguments.of("AES/GCM/PKCS5Padding", "NoPadding", "AES/GCM/PKCS5Padding", 0),
                 Arguments.of("AES/CBC/NoPadding", "NoPadding", "AES/CBC/NoPadding", 0),
                 Arguments.of("AES/CCM", "PKCS5Padding", "AES/CCM/PKCS5Padding", 0),
-                Arguments.of("CBC", "NoPadding", "AES/CBC/NoPadding", 0)
+                Arguments.of("ChaCha7539", "NoPadding", "ChaCha7539", 0)
         );
     }
 }
