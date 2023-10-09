@@ -4,6 +4,7 @@ import eu.bukka.jcrypto.options.CipherOptions;
 
 import java.security.InvalidParameterException;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class CipherAlgorithm {
     final private String[] STREAM_MODES = {"CTR", "OFB", "CFB"};
@@ -11,29 +12,29 @@ public class CipherAlgorithm {
     /**
      * The cipher name (e.g. AES)
      */
-    private String cipher;
+    private final String cipher;
 
     /**
      * Streaming block mode
      */
-    private String mode;
+    private final String mode;
 
     /**
      * Cipher padding (e.g. NoPadding or PKCS5Padding)
      */
-    private String padding;
+    private final String padding;
 
     /**
      * The key size or 0 if unspecified (taken from the key length)
      */
-    private int keySize;
+    private final int keySize;
 
     public CipherAlgorithm(String cipher, String mode, String padding, int keySize) {
         this.cipher = cipher;
         this.mode = mode;
         this.keySize = keySize;
         this.padding = padding != null ? padding : "NoPadding";
-        if (isStreamMode() && padding != "NoPadding") {
+        if (isStreamMode() && Objects.equals(padding, "NoPadding")) {
             throw new InvalidParameterException("Padding is not used for stream mode");
         }
     }
@@ -52,7 +53,7 @@ public class CipherAlgorithm {
 
     public static CipherAlgorithm fromOptions(CipherOptions options) {
         String algorithm = options.getAlgorithm();
-        if (algorithm == null || algorithm.length() == 0) {
+        if (algorithm == null || algorithm.isEmpty()) {
             throw new InvalidParameterException("Algorithm cannot be an empty string");
         }
         String padding = options.getPadding();

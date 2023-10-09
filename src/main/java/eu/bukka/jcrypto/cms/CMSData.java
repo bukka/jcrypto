@@ -15,9 +15,9 @@ abstract public class CMSData {
         SMIME,
     }
 
-    protected class Algorithm {
-        private ASN1ObjectIdentifier identifier;
-        private boolean authenticated;
+    protected static class Algorithm {
+        private final ASN1ObjectIdentifier identifier;
+        private final boolean authenticated;
 
         public Algorithm(ASN1ObjectIdentifier identifier, boolean authenticate) {
             this.identifier = identifier;
