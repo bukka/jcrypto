@@ -49,17 +49,14 @@ public class CMSEnvelope extends CMSData {
         byte[] encodedData;
         CMSTypedData data = new CMSProcessableByteArray(options.getInputData());
         Algorithm algorithm = getAlgorithm();
+        OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(algorithm.getIdentifier())
+                .setProvider("BC").build();
         if (algorithm.isAuthenticated()) {
-            OutputEncryptor encryptor = new BcCMSContentEncryptorBuilder(algorithm.getIdentifier()).build();
             CMSAuthEnvelopedDataGenerator authEnvDataGenerator = new CMSAuthEnvelopedDataGenerator();
             authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
             CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor)encryptor);
-            //TODO: wait for support for getting encoded data - this currently doesn't work.
-            // encodedData = authEnvData.getEncoded();
-            throw new CMSException("It is not possible encode auth enveloped data");
+            encodedData = authEnvData.getEncoded();
         } else {
-            OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(algorithm.getIdentifier())
-                    .setProvider("BC").build();
             CMSEnvelopedDataGenerator envDataGenerator = new CMSEnvelopedDataGenerator();
             envDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
             CMSEnvelopedData envData = envDataGenerator.generate(data, encryptor);
