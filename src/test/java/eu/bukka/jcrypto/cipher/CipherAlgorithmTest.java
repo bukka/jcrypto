@@ -51,7 +51,7 @@ class CipherAlgorithmTest {
         Exception exception = assertThrows(InvalidParameterException.class, () -> {
             new CipherAlgorithm("AES", "CTR", "PKCS5Padding", 256);
         });
-        assertEquals("Padding is not used for stream mode", exception.getMessage());
+        assertEquals("Padding cannot be used for stream mode", exception.getMessage());
     }
 
     @Test

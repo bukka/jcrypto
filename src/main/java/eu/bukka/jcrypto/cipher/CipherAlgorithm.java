@@ -34,8 +34,8 @@ public class CipherAlgorithm {
         this.mode = mode;
         this.keySize = keySize;
         this.padding = padding != null ? padding : "NoPadding";
-        if (isStreamMode() && Objects.equals(padding, "NoPadding")) {
-            throw new InvalidParameterException("Padding is not used for stream mode");
+        if (isStreamMode() && !Objects.equals(this.padding, "NoPadding")) {
+            throw new InvalidParameterException("Padding cannot be used for stream mode");
         }
     }
 
