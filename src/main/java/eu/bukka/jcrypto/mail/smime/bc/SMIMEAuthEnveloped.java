@@ -1,4 +1,4 @@
-package eu.bukka.jcrypto.mail.smime;
+package eu.bukka.jcrypto.mail.smime.bc;
 
 import org.bouncycastle.cms.CMSAuthEnvelopedData;
 import org.bouncycastle.cms.CMSException;

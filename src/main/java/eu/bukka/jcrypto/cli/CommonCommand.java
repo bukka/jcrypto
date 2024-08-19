@@ -4,8 +4,7 @@ import eu.bukka.jcrypto.options.CommonOptions;
 import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 
 public class CommonCommand implements CommonOptions {
@@ -18,12 +17,19 @@ public class CommonCommand implements CommonOptions {
     @CommandLine.Option(names = {"-f", "--form"}, description = "Input and output form")
     private String form = "PEM";
 
+    @Override
     public File getInputFile() {
         return inputFile;
     }
 
+    @Override
     public File getOutputFile() {
         return outputFile;
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        return Files.newOutputStream(outputFile.toPath());
     }
 
     public String getForm() {

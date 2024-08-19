@@ -72,8 +72,7 @@ public class CMSEnvelope extends CMSData {
         }
     }
 
-    private byte[] decryptKEK(CMSEnvelopedData envelopedData) throws CMSException {
-        RecipientInformationStore recipients = envelopedData.getRecipientInfos();
+    private byte[] decryptKEK(RecipientInformationStore recipients) throws CMSException {
         RecipientId rid = new KEKRecipientId(getSecretKeyId());
         RecipientInformation recipient = recipients.get(rid);
         return recipient.getContent(
@@ -81,11 +80,22 @@ public class CMSEnvelope extends CMSData {
                         .setProvider("BC"));
     }
 
+    private RecipientInformationStore getDataRecipients() throws IOException, CMSException {
+        Algorithm algorithm = getAlgorithm();
+        if (algorithm.isAuthenticated()) {
+            CMSAuthEnvelopedData authEnvelopedData = new CMSAuthEnvelopedData(options.getInputData());
+            return authEnvelopedData.getRecipientInfos();
+        } else {
+            CMSEnvelopedData envelopedData = new CMSEnvelopedData(options.getInputData());
+            return envelopedData.getRecipientInfos();
+        }
+    }
+
     public void decrypt() throws IOException, CMSException {
-        CMSEnvelopedData envelopedData = new CMSEnvelopedData(options.getInputData());
+        RecipientInformationStore recipients = getDataRecipients();
         byte[] decryptedData;
         if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
-            decryptedData = decryptKEK(envelopedData);
+            decryptedData = decryptKEK(recipients);
         } else {
             throw new IllegalArgumentException("Invalid arguments");
         }

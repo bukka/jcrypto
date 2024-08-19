@@ -1,4 +1,4 @@
-package eu.bukka.jcrypto.mail.smime;
+package eu.bukka.jcrypto.mail.smime.bc;
 
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;

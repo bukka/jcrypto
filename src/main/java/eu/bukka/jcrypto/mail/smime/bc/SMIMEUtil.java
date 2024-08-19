@@ -1,4 +1,4 @@
-package eu.bukka.jcrypto.mail.smime;
+package eu.bukka.jcrypto.mail.smime.bc;
 
 import org.bouncycastle.asn1.cms.IssuerAndSerialNumber;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
