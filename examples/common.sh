@@ -15,3 +15,22 @@ function jcrypto {
   echo $@
   $jcrypto_cmd $@
 }
+
+function jcrypto_dump_pem {
+  echo "=== ASN.1 ==="
+  openssl asn1parse -i -in "$1"
+}
+
+function jcrypto_dump_smime {
+  jcrypto_smime_file_txt="$1"
+  jcrypto_smime_file_b64="$1.b64"
+  sed '/^[^:]*: /d'  "$jcrypto_smime_file_txt" | sed '/^[[:space:]]*$/d' > "$jcrypto_smime_file_b64"
+
+  echo "=== SMIME ==="
+  cat "$jcrypto_smime_file_txt"
+  echo ""
+  echo "=== ASN.1 ==="
+  openssl asn1parse -i -in "$jcrypto_smime_file_b64" -inform B64
+
+  rm "$jcrypto_smime_file_b64"
+}
