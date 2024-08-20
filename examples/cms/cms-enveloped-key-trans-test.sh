@@ -3,8 +3,8 @@
 jcrypto_this_dir="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$( dirname $jcrypto_this_dir )/common.sh"
 
-jcrypto_cert_file="$jcrypto_this_dir/certificate.pem"
-jcrypto_priv_key="$jcrypto_this_dir/private_key.pem"
+jcrypto_cert_file="$jcrypto_data_dir/certificate.pem"
+jcrypto_priv_key="$jcrypto_data_dir/private_key.pem"
 
 jcrypto_out_enc_file="$jcrypto_this_dir/out-cms-env-key-trans.pem"
 jcrypto cms encrypt -i "$jcrypto_this_dir/in-cms-data.txt" -f PEM -c aes-128-cbc \
