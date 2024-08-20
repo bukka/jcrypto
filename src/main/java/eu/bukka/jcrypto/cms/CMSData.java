@@ -6,7 +6,7 @@ import org.bouncycastle.cms.CMSAlgorithm;
 
 import java.security.InvalidParameterException;
 
-abstract public class CMSData {
+abstract public class CMSData extends CMSBase {
     protected CMSEnvelopeOptions options;
 
     protected enum Form {
@@ -38,7 +38,9 @@ abstract public class CMSData {
         }
     }
 
-    public CMSData(CMSEnvelopeOptions options) {
+    public CMSData(CMSEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
+                   RecipientHandler recipientHandler) {
+        super(recipientInfoGeneratorFactory, recipientHandler);
         this.options = options;
     }
 

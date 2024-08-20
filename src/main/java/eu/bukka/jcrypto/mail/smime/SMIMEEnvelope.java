@@ -1,5 +1,7 @@
 package eu.bukka.jcrypto.mail.smime;
 
+import eu.bukka.jcrypto.cms.RecipientHandler;
+import eu.bukka.jcrypto.cms.RecipientInfoGeneratorFactory;
 import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnveloped;
 import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedGenerator;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
@@ -27,31 +29,13 @@ import java.io.*;
 import java.util.Properties;
 
 public class SMIMEEnvelope extends SMIMEData {
-    public SMIMEEnvelope(MailSMIMEEnvelopeOptions options) {
-        super(options);
-    }
-
-    private byte[] getSecretKeyId() {
-        return Strings.toByteArray(options.getSecretKeyIdentifier());
-    }
-
-    private SecretKey getSecretKey() {
-        return new SecretKeySpec(Hex.decode(options.getSecretKey()), "AES");
-    }
-
-    private RecipientInfoGenerator getKEKRecipientInfoGenerator() {
-        return new JceKEKRecipientInfoGenerator(getSecretKeyId(), getSecretKey())
-                .setProvider("BC");
+    public SMIMEEnvelope(MailSMIMEEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
+                         RecipientHandler recipientHandler) {
+        super(options, recipientInfoGeneratorFactory, recipientHandler);
     }
 
     public void encrypt() throws IOException, CMSException, MessagingException, SMIMEException {
-        RecipientInfoGenerator recipientInfoGenerator;
-        if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
-            // KEKRecipientInfo choice
-            recipientInfoGenerator = getKEKRecipientInfoGenerator();
-        } else {
-            throw new CMSException("No recipient info");
-        }
+        RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
 
         MimeBodyPart msg = new MimeBodyPart();
         MimeBodyPart mp;
@@ -85,14 +69,6 @@ public class SMIMEEnvelope extends SMIMEData {
         body.writeTo(options.getOutputStream());
     }
 
-    private byte[] decryptKEK(RecipientInformationStore recipients) throws CMSException {
-        RecipientId rid = new KEKRecipientId(getSecretKeyId());
-        RecipientInformation recipient = recipients.get(rid);
-        return recipient.getContent(
-                new JceKEKEnvelopedRecipient(getSecretKey())
-                        .setProvider("BC"));
-    }
-
     private RecipientInformationStore getDataRecipients(MimeMessage msg) throws IOException, CMSException, MessagingException {
         SMIMEData.Algorithm algorithm = getAlgorithm();
         if (algorithm.isAuthenticated()) {
@@ -111,12 +87,7 @@ public class SMIMEEnvelope extends SMIMEData {
         MimeMessage msg = new MimeMessage(session, new ByteArrayInputStream(options.getInputData()));
 
         RecipientInformationStore recipients = getDataRecipients(msg);
-        byte[] decryptedData;
-        if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
-            decryptedData = decryptKEK(recipients);
-        } else {
-            throw new IllegalArgumentException("Invalid arguments");
-        }
+        byte[] decryptedData = recipientHandler.getContent(recipients);
         options.writeOutputData(decryptedData);
     }
 }

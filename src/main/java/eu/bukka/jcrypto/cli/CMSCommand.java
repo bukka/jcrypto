@@ -6,6 +6,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true,
@@ -23,6 +24,12 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
     private String secretKeyIdentifier;
 
+    @Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
+    private File certificateFile;
+
+    @Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
+    private File privateKeyFile;
+
     public String getAlgorithm() {
         return algorithm;
     }
@@ -33,6 +40,14 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
 
     public String getSecretKeyIdentifier() {
         return secretKeyIdentifier;
+    }
+
+    public File getCertificateFile() {
+        return certificateFile;
+    }
+
+    public File getPrivateKeyFile() {
+        return privateKeyFile;
     }
 
     @Override

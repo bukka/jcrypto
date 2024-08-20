@@ -20,31 +20,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class CMSEnvelope extends CMSData {
+    public CMSEnvelope(CMSEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
+                       RecipientHandler recipientHandler) {
+        super(options, recipientInfoGeneratorFactory, recipientHandler);
+    }
+
     public CMSEnvelope(CMSEnvelopeOptions options) {
-        super(options);
-    }
-
-    private byte[] getSecretKeyId() {
-        return Strings.toByteArray(options.getSecretKeyIdentifier());
-    }
-
-    private SecretKey getSecretKey() {
-        return new SecretKeySpec(Hex.decode(options.getSecretKey()), "AES");
-    }
-
-    private RecipientInfoGenerator getKEKRecipientInfoGenerator() {
-        return new JceKEKRecipientInfoGenerator(getSecretKeyId(), getSecretKey())
-                .setProvider("BC");
+        this(options, new RecipientInfoGeneratorFactory(options), new RecipientHandler(options));
     }
 
     public void encrypt() throws IOException, CMSException {
-        RecipientInfoGenerator recipientInfoGenerator;
-        if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
-            // KEKRecipientInfo choice
-            recipientInfoGenerator = getKEKRecipientInfoGenerator();
-        } else {
-            throw new CMSException("No recipient info");
-        }
+        RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
 
         byte[] encodedData;
         CMSTypedData data = new CMSProcessableByteArray(options.getInputData());
@@ -54,7 +40,7 @@ public class CMSEnvelope extends CMSData {
         if (algorithm.isAuthenticated()) {
             CMSAuthEnvelopedDataGenerator authEnvDataGenerator = new CMSAuthEnvelopedDataGenerator();
             authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
-            CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor)encryptor);
+            CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor) encryptor);
             encodedData = authEnvData.getEncoded();
         } else {
             CMSEnvelopedDataGenerator envDataGenerator = new CMSEnvelopedDataGenerator();
@@ -72,14 +58,6 @@ public class CMSEnvelope extends CMSData {
         }
     }
 
-    private byte[] decryptKEK(RecipientInformationStore recipients) throws CMSException {
-        RecipientId rid = new KEKRecipientId(getSecretKeyId());
-        RecipientInformation recipient = recipients.get(rid);
-        return recipient.getContent(
-                new JceKEKEnvelopedRecipient(getSecretKey())
-                        .setProvider("BC"));
-    }
-
     private RecipientInformationStore getDataRecipients() throws IOException, CMSException {
         Algorithm algorithm = getAlgorithm();
         if (algorithm.isAuthenticated()) {
@@ -93,12 +71,7 @@ public class CMSEnvelope extends CMSData {
 
     public void decrypt() throws IOException, CMSException {
         RecipientInformationStore recipients = getDataRecipients();
-        byte[] decryptedData;
-        if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
-            decryptedData = decryptKEK(recipients);
-        } else {
-            throw new IllegalArgumentException("Invalid arguments");
-        }
+        byte[] decryptedData = recipientHandler.getContent(recipients);
         if (getForm() == Form.PEM) {
             JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
             writer.write(Strings.fromByteArray(decryptedData));

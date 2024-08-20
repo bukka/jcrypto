@@ -1,5 +1,8 @@
 package eu.bukka.jcrypto.mail.smime;
 
+import eu.bukka.jcrypto.cms.CMSBase;
+import eu.bukka.jcrypto.cms.RecipientHandler;
+import eu.bukka.jcrypto.cms.RecipientInfoGeneratorFactory;
 import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedGenerator;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -8,7 +11,7 @@ import org.bouncycastle.mail.smime.SMIMEEnvelopedGenerator;
 
 import java.security.InvalidParameterException;
 
-abstract public class SMIMEData {
+abstract public class SMIMEData extends CMSBase {
     protected MailSMIMEEnvelopeOptions options;
 
     protected static class Algorithm {
@@ -41,7 +44,9 @@ abstract public class SMIMEData {
         }
     }
 
-    public SMIMEData(MailSMIMEEnvelopeOptions options) {
+    public SMIMEData(MailSMIMEEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
+                     RecipientHandler recipientHandler) {
+        super(recipientInfoGeneratorFactory, recipientHandler);
         this.options = options;
     }
 
