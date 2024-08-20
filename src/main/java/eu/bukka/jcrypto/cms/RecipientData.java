@@ -2,6 +2,8 @@ package eu.bukka.jcrypto.cms;
 
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class RecipientData {
@@ -40,8 +43,9 @@ public class RecipientData {
              PEMParser pemParser = new PEMParser(certReader)) {
 
             Object object = pemParser.readObject();
-            if (object instanceof X509Certificate) {
-                return (X509Certificate) object;
+            if (object instanceof X509CertificateHolder) {
+                return new JcaX509CertificateConverter().setProvider("BC")
+                        .getCertificate((X509CertificateHolder) object);
             } else if (object instanceof Certificate) {
                 return (X509Certificate) object;
             } else {
@@ -49,6 +53,8 @@ public class RecipientData {
             }
         } catch (IOException e) {
             throw new CMSException("Failed to load certificate", e);
+        } catch (CertificateException e) {
+            throw new CMSException("Failed to parse certificate", e);
         }
     }
 
