@@ -1,0 +1,1 @@
+This is a tests message that is meant for testing S/MIME mail command line tool.

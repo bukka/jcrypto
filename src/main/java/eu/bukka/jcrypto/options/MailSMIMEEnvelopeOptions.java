@@ -6,4 +6,8 @@ public interface MailSMIMEEnvelopeOptions extends CMSEnvelopeOptions {
     public String getMailFrom();
 
     public String getMailSubject();
+
+    public String getMimeType();
+
+    public String getCharset();
 }

@@ -16,6 +16,7 @@ import org.bouncycastle.operator.OutputEncryptor;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 
+import javax.activation.DataHandler;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.mail.Address;
@@ -25,6 +26,7 @@ import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.util.ByteArrayDataSource;
 import java.io.*;
 import java.util.Properties;
 
@@ -38,10 +40,35 @@ public class SMIMEEnvelope extends SMIMEData {
         super(options);
     }
 
+    private MimeBodyPart createMimeBodyPartFromText(byte[] inputData, String charset) throws MessagingException, UnsupportedEncodingException {
+        String textContent = new String(inputData, charset);
+        MimeBodyPart msg = new MimeBodyPart();
+        msg.setText(textContent, charset);
+
+        return msg;
+    }
+
+    private MimeBodyPart createMimeBodyPartFromBinary(byte[] inputData, String mimeType) throws MessagingException {
+        MimeBodyPart msg = new MimeBodyPart();
+        ByteArrayDataSource dataSource = new ByteArrayDataSource(inputData, mimeType);
+        msg.setDataHandler(new DataHandler(dataSource));
+
+        return msg;
+    }
+
+    private MimeBodyPart createMimeBodyPart() throws IOException, MessagingException {
+        byte[] inputData = options.getInputData();
+        String mimeType = options.getMimeType();
+        if (mimeType.startsWith("text/")) {
+            return createMimeBodyPartFromText(inputData, "UTF-8");
+        }
+        return createMimeBodyPartFromBinary(inputData, mimeType);
+    }
+
     public void encrypt() throws IOException, CMSException, MessagingException, SMIMEException {
         RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
 
-        MimeBodyPart msg = new MimeBodyPart();
+        MimeBodyPart msg = createMimeBodyPart();
         MimeBodyPart mp;
 
         SMIMEData.Algorithm algorithm = getAlgorithm();
@@ -68,7 +95,9 @@ public class SMIMEEnvelope extends SMIMEData {
         body.setFrom(fromUser);
         body.setRecipient(Message.RecipientType.TO, toUser);
         body.setSubject(options.getMailSubject());
-        body.setContent(mp.getContent(), mp.getContentType());
+        Object content = mp.getContent();
+        String contentType = mp.getContentType();
+        body.setContent(content, contentType);
         body.saveChanges();
         body.writeTo(options.getOutputStream());
     }

@@ -37,6 +37,12 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @CommandLine.Option(names = {"--subject"}, description = "Mail subject")
     private String mailSubject;
 
+    @CommandLine.Option(names = {"--mime-type"}, description = "Mail content mime type")
+    private String mimeType = "text/plain";
+
+    @CommandLine.Option(names = {"--charset"}, description = "Charset for text mime type")
+    private String charset = "UTF-8";
+
     @Override
     public String getAlgorithm() {
         return algorithm;
@@ -75,6 +81,16 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @Override
     public String getMailSubject() {
         return mailSubject;
+    }
+
+    @Override
+    public String getCharset() {
+        return charset;
+    }
+
+    @Override
+    public String getMimeType() {
+        return mimeType;
     }
 
     @Override
