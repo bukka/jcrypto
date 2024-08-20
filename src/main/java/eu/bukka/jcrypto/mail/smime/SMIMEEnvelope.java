@@ -34,6 +34,10 @@ public class SMIMEEnvelope extends SMIMEData {
         super(options, recipientInfoGeneratorFactory, recipientHandler);
     }
 
+    public SMIMEEnvelope(MailSMIMEEnvelopeOptions options) {
+        super(options);
+    }
+
     public void encrypt() throws IOException, CMSException, MessagingException, SMIMEException {
         RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
 

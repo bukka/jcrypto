@@ -4,6 +4,7 @@ import eu.bukka.jcrypto.mail.smime.SMIMEEnvelope;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "mail", mixinStandardHelpOptions = true,
@@ -20,6 +21,12 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
 
     @CommandLine.Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
     private String secretKeyIdentifier;
+
+    @CommandLine.Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
+    private File certificateFile;
+
+    @CommandLine.Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
+    private File privateKeyFile;
 
     @CommandLine.Option(names = {"--from"}, description = "Mail From")
     private String mailFrom;
@@ -43,6 +50,16 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @Override
     public String getSecretKeyIdentifier() {
         return secretKeyIdentifier;
+    }
+
+    @Override
+    public File getCertificateFile() {
+        return certificateFile;
+    }
+
+    @Override
+    public File getPrivateKeyFile() {
+        return privateKeyFile;
     }
 
     @Override

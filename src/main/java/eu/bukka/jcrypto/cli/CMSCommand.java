@@ -30,22 +30,27 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
     private File privateKeyFile;
 
+    @Override
     public String getAlgorithm() {
         return algorithm;
     }
 
+    @Override
     public String getSecretKey() {
         return secretKey;
     }
 
+    @Override
     public String getSecretKeyIdentifier() {
         return secretKeyIdentifier;
     }
 
+    @Override
     public File getCertificateFile() {
         return certificateFile;
     }
 
+    @Override
     public File getPrivateKeyFile() {
         return privateKeyFile;
     }

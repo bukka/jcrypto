@@ -30,22 +30,27 @@ public class CipherCommand extends CommonCommand implements Callable<Integer>, C
     @Option(names = {"--iv-out"}, description = "IV output file")
     private File ivOutputFile;
 
+    @Override
     public String getAlgorithm() {
         return algorithm;
     }
 
+    @Override
     public String getKey() {
         return key;
     }
 
+    @Override
     public String getIv() {
         return iv;
     }
 
+    @Override
     public File getIvOutputFile() {
         return ivOutputFile;
     }
 
+    @Override
     public String getPadding() {
         return padding;
     }

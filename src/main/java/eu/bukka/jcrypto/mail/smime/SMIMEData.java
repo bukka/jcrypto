@@ -50,6 +50,11 @@ abstract public class SMIMEData extends CMSBase {
         this.options = options;
     }
 
+    public SMIMEData(MailSMIMEEnvelopeOptions options) {
+        super(options);
+        this.options = options;
+    }
+
     protected Algorithm getAlgorithm() {
         String algorithm = options.getAlgorithm().toUpperCase();
         switch (algorithm) {

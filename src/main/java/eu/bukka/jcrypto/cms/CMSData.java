@@ -12,7 +12,6 @@ abstract public class CMSData extends CMSBase {
     protected enum Form {
         DER,
         PEM,
-        SMIME,
     }
 
     protected static class Algorithm {
@@ -44,6 +43,11 @@ abstract public class CMSData extends CMSBase {
         this.options = options;
     }
 
+    public CMSData(CMSEnvelopeOptions options) {
+        super(options);
+        this.options = options;
+    }
+
     protected Algorithm getAlgorithm() {
         String algorithm = options.getAlgorithm().toUpperCase();
         switch (algorithm) {
@@ -67,12 +71,11 @@ abstract public class CMSData extends CMSBase {
     protected Form getForm() {
         String form = options.getForm();
         switch (form) {
+            case "BER": // We treat BER as DER for now
             case "DER":
                 return Form.DER;
             case "PEM":
                 return Form.PEM;
-            case "SMIME":
-                return Form.SMIME;
             default:
                 throw new InvalidParameterException("Invalid form " + form);
         }

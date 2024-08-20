@@ -32,18 +32,22 @@ public class CommonCommand implements CommonOptions {
         return Files.newOutputStream(outputFile.toPath());
     }
 
+    @Override
     public String getForm() {
         return form;
     }
 
+    @Override
     public byte[] getInputData() throws IOException {
         return Files.readAllBytes(getInputFile().toPath());
     }
 
+    @Override
     public void writeData(File dataFile, byte[] data) throws IOException {
         FileUtils.writeByteArrayToFile(dataFile, data);
     }
 
+    @Override
     public void writeOutputData(byte[] data) throws IOException {
         writeData(getOutputFile(), data);
     }

@@ -4,20 +4,15 @@ import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.cms.*;
-import org.bouncycastle.cms.bc.BcCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
-import org.bouncycastle.cms.jcajce.JceKEKEnvelopedRecipient;
-import org.bouncycastle.cms.jcajce.JceKEKRecipientInfoGenerator;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.OutputAEADEncryptor;
 import org.bouncycastle.operator.OutputEncryptor;
 import org.bouncycastle.util.Strings;
-import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.io.pem.PemObject;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 public class CMSEnvelope extends CMSData {
     public CMSEnvelope(CMSEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
@@ -26,7 +21,7 @@ public class CMSEnvelope extends CMSData {
     }
 
     public CMSEnvelope(CMSEnvelopeOptions options) {
-        this(options, new RecipientInfoGeneratorFactory(options), new RecipientHandler(options));
+        super(options);
     }
 
     public void encrypt() throws IOException, CMSException {
@@ -58,13 +53,27 @@ public class CMSEnvelope extends CMSData {
         }
     }
 
+    private byte[] convertPemToBer(byte[] pemData) throws IOException {
+        try (PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(pemData)))) {
+            PemObject pemObject = pemParser.readPemObject();
+            if (pemObject == null) {
+                throw new IOException("Invalid PEM data");
+            }
+            return pemObject.getContent();
+        }
+    }
+
     private RecipientInformationStore getDataRecipients() throws IOException, CMSException {
         Algorithm algorithm = getAlgorithm();
+        byte[] inputData = options.getInputData();
+        if (getForm() == Form.PEM) {
+            inputData = convertPemToBer(inputData);
+        }
         if (algorithm.isAuthenticated()) {
-            CMSAuthEnvelopedData authEnvelopedData = new CMSAuthEnvelopedData(options.getInputData());
+            CMSAuthEnvelopedData authEnvelopedData = new CMSAuthEnvelopedData(inputData);
             return authEnvelopedData.getRecipientInfos();
         } else {
-            CMSEnvelopedData envelopedData = new CMSEnvelopedData(options.getInputData());
+            CMSEnvelopedData envelopedData = new CMSEnvelopedData(inputData);
             return envelopedData.getRecipientInfos();
         }
     }
