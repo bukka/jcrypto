@@ -43,6 +43,9 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @CommandLine.Option(names = {"--charset"}, description = "Charset for text mime type")
     private String charset = "UTF-8";
 
+    @CommandLine.Option(names = {"--stream"}, description = "Whether to use streamed parsing")
+    private boolean stream = false;
+
     @Override
     public String getAlgorithm() {
         return algorithm;
@@ -91,6 +94,11 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @Override
     public String getMimeType() {
         return mimeType;
+    }
+
+    @Override
+    public boolean isStream() {
+        return stream;
     }
 
     @Override

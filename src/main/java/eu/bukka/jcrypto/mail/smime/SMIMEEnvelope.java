@@ -4,11 +4,13 @@ import eu.bukka.jcrypto.cms.RecipientHandler;
 import eu.bukka.jcrypto.cms.RecipientInfoGeneratorFactory;
 import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnveloped;
 import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedGenerator;
+import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedParser;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.mail.smime.SMIMEEnveloped;
 import org.bouncycastle.mail.smime.SMIMEEnvelopedGenerator;
+import org.bouncycastle.mail.smime.SMIMEEnvelopedParser;
 import org.bouncycastle.mail.smime.SMIMEException;
 import org.bouncycastle.operator.OutputEncryptor;
 
@@ -98,12 +100,22 @@ public class SMIMEEnvelope extends SMIMEData {
 
     private RecipientInformationStore getDataRecipients(MimeMessage msg) throws IOException, CMSException, MessagingException {
         SMIMEData.Algorithm algorithm = getAlgorithm();
-        if (algorithm.isAuthenticated()) {
-            CMSAuthEnvelopedData authEnvelopedData = new SMIMEAuthEnveloped(msg);
-            return authEnvelopedData.getRecipientInfos();
+        if (options.isStream()) {
+            if (algorithm.isAuthenticated()) {
+                SMIMEAuthEnvelopedParser authEnvelopedParser = new SMIMEAuthEnvelopedParser(msg);
+                return authEnvelopedParser.getRecipientInfos();
+            } else {
+                SMIMEEnvelopedParser envelopedParser = new SMIMEEnvelopedParser(msg);
+                return envelopedParser.getRecipientInfos();
+            }
         } else {
-            CMSEnvelopedData envelopedData = new SMIMEEnveloped(msg);
-            return envelopedData.getRecipientInfos();
+            if (algorithm.isAuthenticated()) {
+                SMIMEAuthEnveloped authEnvelopedData = new SMIMEAuthEnveloped(msg);
+                return authEnvelopedData.getRecipientInfos();
+            } else {
+                SMIMEEnveloped envelopedData = new SMIMEEnveloped(msg);
+                return envelopedData.getRecipientInfos();
+            }
         }
     }
 
