@@ -3,13 +3,13 @@ package eu.bukka.jcrypto.options;
 import java.io.File;
 
 public interface CMSEnvelopeOptions extends CommonOptions {
-    public String getAlgorithm();
+    String getAlgorithm();
 
-    public String getSecretKey();
+    String getSecretKey();
 
-    public String getSecretKeyIdentifier();
+    String getSecretKeyIdentifier();
 
-    public File getCertificateFile();
+    File getCertificateFile();
 
-    public File getPrivateKeyFile();
+    File getPrivateKeyFile();
 }

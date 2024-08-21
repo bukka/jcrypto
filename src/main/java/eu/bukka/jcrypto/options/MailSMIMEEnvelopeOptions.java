@@ -1,13 +1,13 @@
 package eu.bukka.jcrypto.options;
 
 public interface MailSMIMEEnvelopeOptions extends CMSEnvelopeOptions {
-    public String getMailTo();
+    String getMailTo();
 
-    public String getMailFrom();
+    String getMailFrom();
 
-    public String getMailSubject();
+    String getMailSubject();
 
-    public String getMimeType();
+    String getMimeType();
 
-    public String getCharset();
+    String getCharset();
 }
