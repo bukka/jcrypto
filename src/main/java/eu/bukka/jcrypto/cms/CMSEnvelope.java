@@ -80,7 +80,7 @@ public class CMSEnvelope extends CMSData {
 
     public void decrypt() throws IOException, CMSException {
         RecipientInformationStore recipients = getDataRecipients();
-        byte[] decryptedData = recipientHandler.getContent(recipients);
+        byte[] decryptedData = recipientHandler.getContent(recipients, getAlgorithm().isAuthenticated());
         if (getForm() == Form.PEM) {
             JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
             writer.write(Strings.fromByteArray(decryptedData));

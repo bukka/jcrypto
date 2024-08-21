@@ -2,6 +2,7 @@ package eu.bukka.jcrypto.cli;
 
 import eu.bukka.jcrypto.cms.CMSEnvelope;
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -30,6 +31,9 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
     private File privateKeyFile;
 
+    @CommandLine.Option(names = {"--stream"}, description = "Whether to use streamed parsing")
+    private boolean stream = false;
+
     @Override
     public String getAlgorithm() {
         return algorithm;
@@ -53,6 +57,11 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Override
     public File getPrivateKeyFile() {
         return privateKeyFile;
+    }
+
+    @Override
+    public boolean isStream() {
+        return stream;
     }
 
     @Override

@@ -10,6 +10,4 @@ public interface MailSMIMEEnvelopeOptions extends CMSEnvelopeOptions {
     String getMimeType();
 
     String getCharset();
-
-    boolean isStream();
 }

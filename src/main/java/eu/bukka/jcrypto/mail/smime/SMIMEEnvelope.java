@@ -126,7 +126,7 @@ public class SMIMEEnvelope extends SMIMEData {
         MimeMessage msg = new MimeMessage(session, new ByteArrayInputStream(options.getInputData()));
 
         RecipientInformationStore recipients = getDataRecipients(msg);
-        byte[] decryptedData = recipientHandler.getContent(recipients);
+        byte[] decryptedData = recipientHandler.getContent(recipients, getAlgorithm().isAuthenticated());
         options.writeOutputData(decryptedData);
     }
 }

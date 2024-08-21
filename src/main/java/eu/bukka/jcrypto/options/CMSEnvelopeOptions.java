@@ -12,4 +12,6 @@ public interface CMSEnvelopeOptions extends CommonOptions {
     File getCertificateFile();
 
     File getPrivateKeyFile();
+
+    boolean isStream();
 }

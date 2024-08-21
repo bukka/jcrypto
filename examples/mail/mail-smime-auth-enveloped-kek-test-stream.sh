@@ -19,4 +19,4 @@ jcrypto mail decrypt -i "$jcrypto_out_enc_file" -c aes-128-gcm --stream \
 cat "$jcrypto_out_plain_file"
 echo ""
 
-rm "$jcrypto_out_enc_file" "$jcrypto_out_plain_file"
+#rm "$jcrypto_out_enc_file" "$jcrypto_out_plain_file"
