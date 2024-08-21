@@ -7,18 +7,14 @@ import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedGenerator;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
-import org.bouncycastle.cms.jcajce.JceKEKEnvelopedRecipient;
-import org.bouncycastle.cms.jcajce.JceKEKRecipientInfoGenerator;
 import org.bouncycastle.mail.smime.SMIMEEnveloped;
 import org.bouncycastle.mail.smime.SMIMEEnvelopedGenerator;
 import org.bouncycastle.mail.smime.SMIMEException;
 import org.bouncycastle.operator.OutputEncryptor;
-import org.bouncycastle.util.Strings;
-import org.bouncycastle.util.encoders.Hex;
 
+import javax.activation.CommandMap;
 import javax.activation.DataHandler;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import javax.activation.MailcapCommandMap;
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -50,8 +46,17 @@ public class SMIMEEnvelope extends SMIMEData {
 
     private MimeBodyPart createMimeBodyPartFromBinary(byte[] inputData, String mimeType) throws MessagingException {
         MimeBodyPart msg = new MimeBodyPart();
+        MailcapCommandMap mc = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
+        mc.addMailcap("text/html;; x-java-content-handler=com.sun.mail.handlers.text_html");
+        mc.addMailcap("text/xml;; x-java-content-handler=com.sun.mail.handlers.text_xml");
+        mc.addMailcap("text/plain;; x-java-content-handler=com.sun.mail.handlers.text_plain");
+        mc.addMailcap("multipart/*;; x-java-content-handler=com.sun.mail.handlers.multipart_mixed");
+        mc.addMailcap("message/rfc822;; x-java-content-handler=com.sun.mail.handlers.message_rfc822");
         ByteArrayDataSource dataSource = new ByteArrayDataSource(inputData, mimeType);
-        msg.setDataHandler(new DataHandler(dataSource));
+        DataHandler dataHandler = new DataHandler(dataSource);
+        dataHandler.setCommandMap(mc);
+
+        msg.setDataHandler(dataHandler);
 
         return msg;
     }
