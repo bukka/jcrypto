@@ -10,7 +10,7 @@ jcrypto_out_enc_file="$jcrypto_this_dir/out-cms-env-key-trans.pem"
 jcrypto cms encrypt -i "$jcrypto_this_dir/in-cms-data.txt" -f PEM -c aes-128-cbc \
 	    --cert "$jcrypto_cert_file" -o "$jcrypto_out_enc_file"
 
-jcrypto_dump_pem -i -in "$jcrypto_out_enc_file"
+jcrypto_dump_pem "$jcrypto_out_enc_file"
 
 jcrypto_out_plain_file="$jcrypto_this_dir/out-cms-env-key-trans-plain.txt"
 jcrypto cms decrypt -i "$jcrypto_out_enc_file" -f PEM -c aes-128-cbc \
