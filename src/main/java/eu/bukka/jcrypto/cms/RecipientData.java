@@ -19,12 +19,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class RecipientData {
     CMSEnvelopeOptions options;
+
+    X509Certificate certificate;
 
     public RecipientData(CMSEnvelopeOptions options) {
         this.options = options;
@@ -39,23 +42,26 @@ public class RecipientData {
     }
 
     protected X509Certificate getCertificate() throws CMSException {
-        try (FileReader certReader = new FileReader(options.getCertificateFile());
-             PEMParser pemParser = new PEMParser(certReader)) {
+        if (certificate == null) {
+            try (FileReader certReader = new FileReader(options.getCertificateFile());
+                 PEMParser pemParser = new PEMParser(certReader)) {
 
-            Object object = pemParser.readObject();
-            if (object instanceof X509CertificateHolder) {
-                return new JcaX509CertificateConverter().setProvider("BC")
-                        .getCertificate((X509CertificateHolder) object);
-            } else if (object instanceof Certificate) {
-                return (X509Certificate) object;
-            } else {
-                throw new CMSException("Invalid certificate format");
+                Object object = pemParser.readObject();
+                if (object instanceof X509CertificateHolder) {
+                    certificate = new JcaX509CertificateConverter().setProvider("BC")
+                            .getCertificate((X509CertificateHolder) object);
+                } else if (object instanceof Certificate) {
+                    certificate = (X509Certificate) object;
+                } else {
+                    throw new CMSException("Invalid certificate format");
+                }
+            } catch (IOException e) {
+                throw new CMSException("Failed to load certificate", e);
+            } catch (CertificateException e) {
+                throw new CMSException("Failed to parse certificate", e);
             }
-        } catch (IOException e) {
-            throw new CMSException("Failed to load certificate", e);
-        } catch (CertificateException e) {
-            throw new CMSException("Failed to parse certificate", e);
         }
+        return certificate;
     }
 
     protected PrivateKey getPrivateKey() throws CMSException {
@@ -83,5 +89,12 @@ public class RecipientData {
         } catch (PKCSException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected boolean isCertificateForKeyAgree() throws CMSException {
+        certificate = getCertificate();
+        PublicKey publicKey = getCertificate().getPublicKey();
+        String algorithm = publicKey.getAlgorithm();
+        return algorithm.equalsIgnoreCase("DH") || algorithm.equalsIgnoreCase("ECDH");
     }
 }
