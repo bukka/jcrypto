@@ -1,4 +1,4 @@
-package eu.bukka.jcrypto.mail.smime.bc;
+package eu.bukka.jcrypto.bc.mail.smime;
 
 import javax.activation.CommandInfo;
 import javax.activation.MailcapCommandMap;

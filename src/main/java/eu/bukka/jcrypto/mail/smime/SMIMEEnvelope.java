@@ -2,9 +2,9 @@ package eu.bukka.jcrypto.mail.smime;
 
 import eu.bukka.jcrypto.cms.RecipientHandler;
 import eu.bukka.jcrypto.cms.RecipientInfoGeneratorFactory;
-import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnveloped;
-import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedGenerator;
-import eu.bukka.jcrypto.mail.smime.bc.SMIMEAuthEnvelopedParser;
+import eu.bukka.jcrypto.bc.mail.smime.SMIMEAuthEnveloped;
+import eu.bukka.jcrypto.bc.mail.smime.SMIMEAuthEnvelopedGenerator;
+import eu.bukka.jcrypto.bc.mail.smime.SMIMEAuthEnvelopedParser;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
