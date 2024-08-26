@@ -12,13 +12,24 @@ jcrypto_data_dir="$jcrypto_root/examples/data"
 jcrypto_cmd="java -cp $jcrypto_root/target/jcrypto-1.0-SNAPSHOT-jar-with-dependencies.jar eu.bukka.jcrypto.Main"
 
 function jcrypto {
-  echo $@
+  echo jcrypto $@
   $jcrypto_cmd $@
+}
+
+function jcrypto_openssl {
+  echo openssl $@
+  openssl $@
+}
+
+# Cat file and print new line
+function jcrypto_cat {
+  cat $1
+  echo ""
 }
 
 function jcrypto_dump_pem {
   echo "=== ASN.1 ==="
-  openssl asn1parse -i -in "$1"
+  jcrypto_openssl asn1parse -i -in "$1"
 }
 
 function jcrypto_dump_smime {
@@ -30,7 +41,7 @@ function jcrypto_dump_smime {
   cat "$jcrypto_smime_file_txt"
   echo ""
   echo "=== ASN.1 ==="
-  openssl asn1parse -i -in "$jcrypto_smime_file_b64" -inform B64
+  jcrypto_openssl asn1parse -i -in "$jcrypto_smime_file_b64" -inform B64
 
   rm "$jcrypto_smime_file_b64"
 }
