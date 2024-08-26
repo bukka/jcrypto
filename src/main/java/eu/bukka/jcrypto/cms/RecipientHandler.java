@@ -1,5 +1,6 @@
 package eu.bukka.jcrypto.cms;
 
+import eu.bukka.jcrypto.bc.cms.jcajce.JceKEKAuthEnvelopedRecipient;
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceKEKEnvelopedRecipient;
@@ -32,8 +33,7 @@ public class RecipientHandler extends RecipientData {
 
     private Recipient createRecipientForKEK(boolean isAEAD) throws CMSException {
         if (isAEAD && options.isStream()) {
-            // TODO: remove once there is JceKEKAuthEnvelopedRecipient
-            throw new CMSException("Cannot create auth stream recipient for KEK");
+            return new JceKEKAuthEnvelopedRecipient(getSecretKey()).setProvider("BC");
         }
         return new JceKEKEnvelopedRecipient(getSecretKey()).setProvider("BC");
     }
