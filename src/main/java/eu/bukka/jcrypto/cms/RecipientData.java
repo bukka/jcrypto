@@ -15,6 +15,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.KeyPair;
@@ -29,6 +30,10 @@ public class RecipientData {
 
     X509Certificate certificate;
 
+    X509Certificate recipientCertificate;
+
+    X509Certificate senderCertificate;
+
     public RecipientData(CMSEnvelopeOptions options) {
         this.options = options;
     }
@@ -41,27 +46,45 @@ public class RecipientData {
         return new SecretKeySpec(Hex.decode(options.getSecretKey()), "AES");
     }
 
+    protected X509Certificate loadCertificate(File certificateFile) throws CMSException {
+        try (FileReader certReader = new FileReader(certificateFile);
+             PEMParser pemParser = new PEMParser(certReader)) {
+
+            Object object = pemParser.readObject();
+            if (object instanceof X509CertificateHolder) {
+                return new JcaX509CertificateConverter().setProvider("BC")
+                        .getCertificate((X509CertificateHolder) object);
+            } else if (object instanceof Certificate) {
+                return (X509Certificate) object;
+            } else {
+                throw new CMSException("Invalid certificate format");
+            }
+        } catch (IOException e) {
+            throw new CMSException("Failed to load certificate", e);
+        } catch (CertificateException e) {
+            throw new CMSException("Failed to parse certificate", e);
+        }
+    }
+
     protected X509Certificate getCertificate() throws CMSException {
         if (certificate == null) {
-            try (FileReader certReader = new FileReader(options.getCertificateFile());
-                 PEMParser pemParser = new PEMParser(certReader)) {
-
-                Object object = pemParser.readObject();
-                if (object instanceof X509CertificateHolder) {
-                    certificate = new JcaX509CertificateConverter().setProvider("BC")
-                            .getCertificate((X509CertificateHolder) object);
-                } else if (object instanceof Certificate) {
-                    certificate = (X509Certificate) object;
-                } else {
-                    throw new CMSException("Invalid certificate format");
-                }
-            } catch (IOException e) {
-                throw new CMSException("Failed to load certificate", e);
-            } catch (CertificateException e) {
-                throw new CMSException("Failed to parse certificate", e);
-            }
+            certificate = loadCertificate(options.getCertificateFile());
         }
         return certificate;
+    }
+
+    protected X509Certificate getRecipientCertificate() throws CMSException {
+        if (recipientCertificate == null) {
+            recipientCertificate = loadCertificate(options.getRecipientCertificateFile());
+        }
+        return recipientCertificate;
+    }
+
+    protected X509Certificate getSenderCertificate() throws CMSException {
+        if (senderCertificate == null) {
+            senderCertificate = loadCertificate(options.getSenderCertificateFile());
+        }
+        return senderCertificate;
     }
 
     protected PrivateKey getPrivateKey() throws CMSException {

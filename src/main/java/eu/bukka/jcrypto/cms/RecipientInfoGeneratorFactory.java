@@ -9,6 +9,8 @@ import org.bouncycastle.cms.RecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.JceKEKRecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.JceKeyAgreeRecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
+
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 
 public class RecipientInfoGeneratorFactory extends RecipientData {
@@ -21,7 +23,7 @@ public class RecipientInfoGeneratorFactory extends RecipientData {
     }
 
     private ASN1ObjectIdentifier getKeyAgreeOID() throws CMSException {
-        if (getCertificate().getPublicKey().getAlgorithm().equalsIgnoreCase("DH")) {
+        if (getSenderCertificate().getPublicKey().getAlgorithm().equalsIgnoreCase("DH")) {
             return PKCSObjectIdentifiers.dhKeyAgreement;
         } else {
             return CMSAlgorithm.ECDH_SHA256KDF;
@@ -34,9 +36,10 @@ public class RecipientInfoGeneratorFactory extends RecipientData {
 
     private RecipientInfoGenerator createForKeyAgree() throws CMSException {
         try {
-            return new JceKeyAgreeRecipientInfoGenerator(getKeyAgreeOID(), getPrivateKey(),
-                    getCertificate().getPublicKey(), getKeyEncOID()).setProvider("BC");
-        } catch (CMSException e) {
+            JceKeyAgreeRecipientInfoGenerator generator = new JceKeyAgreeRecipientInfoGenerator(getKeyAgreeOID(),
+                    getPrivateKey(), getSenderCertificate().getPublicKey(), getKeyEncOID());
+            return generator.addRecipient(getRecipientCertificate()).setProvider("BC");
+        } catch (CMSException|CertificateEncodingException e) {
             throw new CMSException("Failed to create KeyAgree recipient info generator", e);
         }
     }
@@ -51,10 +54,9 @@ public class RecipientInfoGeneratorFactory extends RecipientData {
 
     public RecipientInfoGenerator create() throws CMSException {
         if (options.getCertificateFile() != null) {
-            if (isCertificateForKeyAgree()) {
-                return createForKeyAgree();
-            }
             return createForKeyTrans();
+        } else if (options.getSenderCertificateFile() != null) {
+            return createForKeyAgree();
         } else if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
             return createForKEK();
         } else {

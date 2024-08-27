@@ -28,8 +28,18 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
     private File certificateFile;
 
-    @Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
+    @CommandLine.Option(names = {"--sender-cert"}, description = "Sender certificate for KeyAgree recipient type")
+    private File senderCertificateFile;
+
+    @CommandLine.Option(names = {"--recipient-cert"}, description = "Recipient certificate for KeyAgree recipient type")
+    private File recipientCertificateFile;
+
+    @CommandLine.Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
     private File privateKeyFile;
+
+    @CommandLine.Option(names = {"--public-key"},
+            description = "Public key for KeyAgree recipient type (alternative to cert)")
+    private File publicKeyFile;
 
     @CommandLine.Option(names = {"--stream"}, description = "Whether to use streamed parsing")
     private boolean stream = false;
@@ -55,8 +65,23 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     }
 
     @Override
+    public File getRecipientCertificateFile() {
+        return recipientCertificateFile;
+    }
+
+    @Override
+    public File getSenderCertificateFile() {
+        return senderCertificateFile;
+    }
+
+    @Override
     public File getPrivateKeyFile() {
         return privateKeyFile;
+    }
+
+    @Override
+    public File getPublicKeyFile() {
+        return publicKeyFile;
     }
 
     @Override

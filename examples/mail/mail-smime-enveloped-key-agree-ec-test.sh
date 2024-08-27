@@ -22,7 +22,8 @@ jcrypto_out_ossl_plain_file_from_ossl="$jcrypto_this_dir/out-smime-env-kye-agree
 echo "JCRYPTO ENCRYPT"
 jcrypto mail encrypt -i "$jcrypto_this_dir/in-message-body.txt" -c aes-128-cbc \
       --from 'Jakub<jakub@bukka.eu>' --to 'Lucas<lucas@bukka.eu>' --subject 'Test' \
-	    --cert "$jcrypto_recip_cert_file" --private-key "$jcrypto_orig_priv_key" -o "$jcrypto_out_enc_file"
+	    --recipient-cert "$jcrypto_recip_cert_file" --sender-cert "$jcrypto_orig_cert_file" \
+	    --private-key "$jcrypto_orig_priv_key" -o "$jcrypto_out_enc_file"
 jcrypto_dump_smime "$jcrypto_out_enc_file"
 
 echo "OPENSSL ENCRYPT"

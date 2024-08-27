@@ -25,8 +25,18 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @CommandLine.Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
     private File certificateFile;
 
+    @CommandLine.Option(names = {"--sender-cert"}, description = "Sender certificate for KeyAgree recipient type")
+    private File senderCertificateFile;
+
+    @CommandLine.Option(names = {"--recipient-cert"}, description = "Recipient certificate for KeyAgree recipient type")
+    private File recipientCertificateFile;
+
     @CommandLine.Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
     private File privateKeyFile;
+
+    @CommandLine.Option(names = {"--public-key"},
+            description = "Public key for KeyAgree recipient type (alternative to cert)")
+    private File publicKeyFile;
 
     @CommandLine.Option(names = {"--from"}, description = "Mail From")
     private String mailFrom;
@@ -67,8 +77,23 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     }
 
     @Override
+    public File getRecipientCertificateFile() {
+        return recipientCertificateFile;
+    }
+
+    @Override
+    public File getSenderCertificateFile() {
+        return senderCertificateFile;
+    }
+
+    @Override
     public File getPrivateKeyFile() {
         return privateKeyFile;
+    }
+
+    @Override
+    public File getPublicKeyFile() {
+        return publicKeyFile;
     }
 
     @Override
