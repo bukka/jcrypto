@@ -95,6 +95,6 @@ public class RecipientData {
         certificate = getCertificate();
         PublicKey publicKey = getCertificate().getPublicKey();
         String algorithm = publicKey.getAlgorithm();
-        return algorithm.equalsIgnoreCase("DH") || algorithm.equalsIgnoreCase("ECDH");
+        return algorithm.equalsIgnoreCase("DH") || algorithm.equalsIgnoreCase("EC");
     }
 }
