@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # set base directory
 if readlink ${BASH_SOURCE[0]} > /dev/null; then
   jcrypto_root="$( dirname "$( dirname "$( readlink ${BASH_SOURCE[0]} )" )" )"

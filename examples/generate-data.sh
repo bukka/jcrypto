@@ -41,10 +41,12 @@ function jc_create_ec() {
     jc_ec_name=$1
     jc_ec_type=$2
     jc_alg_name="ec_${jc_ec_name}"
-    jc_private_key="${jc_data_dir}/private_key_${jc_alg_name}_${jc_ec_type}.pem"
+    jc_private_key_ec="${jc_data_dir}/private_key_${jc_alg_name}_${jc_ec_type}_ec.pem"
+    jc_private_key_pkcs8="${jc_data_dir}/private_key_${jc_alg_name}_${jc_ec_type}.pem"
     jc_certificate="${jc_data_dir}/certificate_${jc_alg_name}_${jc_ec_type}.pem"
-    jc_openssl ecparam -genkey -name $jc_ec_name -out "$jc_private_key"
-    jc_openssl req -new -x509 -key "$jc_private_key" -out "$jc_certificate" -days 1825 \
+    jc_openssl ecparam -genkey -name $jc_ec_name -out "$jc_private_key_ec"
+    jc_openssl pkcs8 -topk8 -nocrypt -in "$jc_private_key_ec" -out "$jc_private_key_pkcs8"
+    jc_openssl req -new -x509 -key "$jc_private_key_ec" -out "$jc_certificate" -days 1825 \
           -subj "/C=UK/ST=England/L=London/O=Zelenka/CN=$jc_ec_type"
 }
 
