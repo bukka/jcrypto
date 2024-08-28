@@ -45,12 +45,12 @@ jcrypto_cat "$jcrypto_out_ossl_plain_file_from_jcrypto"
 
 echo "JCRYPTO DECRYPT OF JCRYPTO"
 jcrypto mail decrypt -i "$jcrypto_out_enc_file" -f PEM -c aes-128-cbc -o "$jcrypto_out_plain_file_from_jcrypto" \
-	--recipient-cert "$jcrypto_orig_cert_file" --private-key "$jcrypto_recip_priv_key"
+	--recipient-cert "$jcrypto_recip_cert_file" --private-key "$jcrypto_recip_priv_key"
 jcrypto_cat "$jcrypto_out_plain_file_from_jcrypto"
 
 echo "JCRYPTO DECRYPT OF OPENSSL"
 jcrypto mail decrypt -i "$jcrypto_out_ossl_enc_file" -f PEM -c aes-128-cbc -o "$jcrypto_out_plain_file_from_ossl" \
-	--recipient-cert "$jcrypto_orig_cert_file" --private-key "$jcrypto_recip_priv_key"
+	--recipient-cert "$jcrypto_recip_cert_file" --private-key "$jcrypto_recip_priv_key"
 jcrypto_cat "$jcrypto_out_plain_file_from_ossl"
 
 rm $jcrypto_out_enc_file $jcrypto_out_plain_file_from_jcrypto $jcrypto_out_plain_file_from_ossl
