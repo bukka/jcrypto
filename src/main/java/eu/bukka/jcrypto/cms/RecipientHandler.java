@@ -16,7 +16,7 @@ public class RecipientHandler extends RecipientData {
     }
 
     private RecipientId createRecipientIdForKeyAgree() throws CMSException {
-        return new JceKeyAgreeRecipientId(getCertificate());
+        return new JceKeyAgreeRecipientId(getRecipientCertificate());
     }
 
     private RecipientId createRecipientIdForKeyTrans() throws CMSException {
@@ -24,13 +24,11 @@ public class RecipientHandler extends RecipientData {
     }
 
     private RecipientId createRecipientId() throws CMSException {
-        if (options.getCertificateFile() != null) {
-            if (isCertificateForKeyAgree()) {
-                return createRecipientIdForKeyAgree();
-            } else {
-                return createRecipientIdForKeyTrans();
-            }
-        } else if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
+        if (options.getRecipientCertificateFile() != null) {
+            return createRecipientIdForKeyAgree();
+        } else if (options.getCertificateFile() != null) {
+            return createRecipientIdForKeyTrans();
+        } else if (options.getSecretKey() != null) {
             return createRecipientIdForKEK();
         } else {
             throw new CMSException("No options to create recipient ID");
@@ -59,16 +57,16 @@ public class RecipientHandler extends RecipientData {
     }
 
     private Recipient createRecipient(boolean isAEAD) throws CMSException {
-        if (options.getCertificateFile() != null) {
-            if (options.getPrivateKeyFile() == null) {
-                throw new CMSException("Private key is required to create recipient");
-            }
-            if (isCertificateForKeyAgree()) {
-                return createRecipientForKeyAgree(isAEAD);
-            }
-            return createRecipientForKeyTrans(isAEAD);
+        if (options.getSecretKey() != null) {
+            return createRecipientForKEK(isAEAD);
         }
-        return createRecipientForKEK(isAEAD);
+        if (options.getPrivateKeyFile() == null) {
+            throw new CMSException("Private key is required to create recipient");
+        }
+        if (options.getRecipientCertificateFile() != null) {
+            return createRecipientForKeyAgree(isAEAD);
+        }
+        return createRecipientForKeyTrans(isAEAD);
     }
 
     public byte[] getContent(RecipientInformationStore recipients, boolean isAEAD) throws CMSException {

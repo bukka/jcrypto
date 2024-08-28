@@ -16,13 +16,14 @@ jcrypto_out_enc_file="$jcrypto_this_dir/out-smime-env-key-agree-stream-enc.txt"
 jcrypto_out_plain_file="$jcrypto_this_dir/out-smime-env-key-agree-stream-plain.txt"
 
 jcrypto mail encrypt -i "$jcrypto_this_dir/in-message-body.txt" -c aes-128-cbc --stream \
-      --from 'Jakub<jakub@bukka.eu>' --to 'Lucas<lucas@bukka.eu>' --subject 'Test' \
-	    --recipient-cert "$jcrypto_recip_cert_file" --sender-cert "$jcrypto_orig_cert_file" \
-	    --private-key "$jcrypto_orig_priv_key" -o "$jcrypto_out_enc_file"
+  --from 'Jakub<jakub@bukka.eu>' --to 'Lucas<lucas@bukka.eu>' --subject 'Test' \
+  --recipient-cert "$jcrypto_recip_cert_file" --sender-cert "$jcrypto_orig_cert_file" \
+  --private-key "$jcrypto_orig_priv_key" -o "$jcrypto_out_enc_file"
+jcrypto_dump_smime "$jcrypto_out_enc_file"
 
 jcrypto mail decrypt -i "$jcrypto_out_enc_file" -c aes-256-cbc  \
-	   --cert "$jcrypto_orig_cert_file" --private-key "$jcrypto_orig_priv_key" \
-      -o "$jcrypto_out_plain_file"
+  --recipient-cert "$jcrypto_recip_cert_file" --sender-cert "$jcrypto_orig_cert_file" \
+  --private-key "$jcrypto_orig_priv_key" -o "$jcrypto_out_plain_file"
 jcrypto_cat "$jcrypto_out_plain_file"
 
 rm "$jcrypto_out_enc_file" "$jcrypto_out_plain_file"
