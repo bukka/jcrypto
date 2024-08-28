@@ -23,7 +23,7 @@ jcrypto_dump_smime "$jcrypto_out_enc_file"
 
 jcrypto mail decrypt -i "$jcrypto_out_enc_file" -c aes-256-cbc  \
   --recipient-cert "$jcrypto_recip_cert_file" --sender-cert "$jcrypto_orig_cert_file" \
-  --private-key "$jcrypto_orig_priv_key" -o "$jcrypto_out_plain_file"
+  --private-key "$jcrypto_recip_priv_key" -o "$jcrypto_out_plain_file"
 jcrypto_cat "$jcrypto_out_plain_file"
 
 rm "$jcrypto_out_enc_file" "$jcrypto_out_plain_file"
