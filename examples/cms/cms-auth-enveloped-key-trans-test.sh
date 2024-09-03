@@ -28,7 +28,7 @@ jcrypto_openssl cms -decrypt -in "$jcrypto_out_ossl_enc_file" -inform PEM -aes-2
 jcrypto_cat "$jcrypto_out_ossl_plain_file_from_ossl"
 
 echo "OPENSSL DECRYPT OF JCRYPTO"
-jcrypto_openssl cms -decrypt -in "$jcrypto_out_ossl_enc_file" -inform PEM -aes-256-gcm \
+jcrypto_openssl cms -decrypt -in "$jcrypto_out_enc_file" -inform PEM -aes-256-gcm \
   -recip "$jcrypto_cert_file" -inkey "$jcrypto_priv_key" -out "$jcrypto_out_ossl_plain_file_from_jcrypto"
 jcrypto_cat "$jcrypto_out_ossl_plain_file_from_jcrypto"
 

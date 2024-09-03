@@ -28,7 +28,7 @@ jcrypto_openssl cms -decrypt -in "$jcrypto_out_ossl_enc_file" -inform SMIME -aes
 jcrypto_cat "$jcrypto_out_ossl_plain_file_from_ossl"
 
 echo "OPENSSL DECRYPT OF JCRYPTO"
-jcrypto_openssl cms -decrypt -in "$jcrypto_out_ossl_enc_file" -inform SMIME -aes-128-cbc \
+jcrypto_openssl cms -decrypt -in "$jcrypto_out_enc_file" -inform SMIME -aes-128-cbc \
   -secretkey 000102030405060708090A0B0C0D0E0F -secretkeyid C0FEE0 -out "$jcrypto_out_ossl_plain_file_from_jcrypto"
 jcrypto_cat "$jcrypto_out_ossl_plain_file_from_jcrypto"
 
