@@ -8,13 +8,12 @@ import eu.bukka.jcrypto.bc.mail.smime.SMIMEAuthEnvelopedParser;
 import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
-import org.bouncycastle.mail.smime.SMIMEEnveloped;
-import org.bouncycastle.mail.smime.SMIMEEnvelopedGenerator;
-import org.bouncycastle.mail.smime.SMIMEEnvelopedParser;
-import org.bouncycastle.mail.smime.SMIMEException;
+import org.bouncycastle.mail.smime.*;
 import org.bouncycastle.operator.OutputEncryptor;
 
+import javax.activation.CommandMap;
 import javax.activation.DataHandler;
+import javax.activation.MailcapCommandMap;
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -61,25 +60,67 @@ public class SMIMEEnvelope extends SMIMEData {
         return createMimeBodyPartFromBinary(inputData, mimeType);
     }
 
-    public void encrypt() throws IOException, CMSException, MessagingException, SMIMEException {
-        RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
+    public class NoHeaderMimeMessage extends MimeMessage {
+        public NoHeaderMimeMessage(Session session) {
+            super(session);
+        }
 
-        MimeBodyPart msg = createMimeBodyPart();
-        MimeBodyPart mp;
+        @Override
+        protected void updateMessageID() throws MessagingException {
+            // no Message-ID header
+        }
 
+        @Override
+        protected void updateHeaders() throws MessagingException {
+            // no header update
+        }
+
+        @Override
+        public void saveChanges() throws MessagingException {
+            // to not add extra headers potentially
+        }
+
+        @Override
+        public String getContentType() {
+            return null; // prevent Content-Type header
+        }
+
+        @Override
+        public String getEncoding() {
+            return null; // prevent Content-Transfer-Encoding header
+        }
+    }
+
+    private MimeBodyPart generateBodyPart(MimeBodyPart bodyPart) throws CMSException, SMIMEException, MessagingException {
         SMIMEData.Algorithm algorithm = getAlgorithm();
         OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(algorithm.getIdentifier())
                 .setProvider("BC").build();
+        RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
+
+        MimeMessage msg = new NoHeaderMimeMessage(null);
+        DataHandler dataHandler = bodyPart.getDataHandler();
+        MailcapCommandMap mc = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
+        mc.addMailcap("text/html;; x-java-content-handler=com.sun.mail.handlers.text_html");
+        mc.addMailcap("text/xml;; x-java-content-handler=com.sun.mail.handlers.text_xml");
+        mc.addMailcap("text/plain;; x-java-content-handler=com.sun.mail.handlers.text_plain");
+        mc.addMailcap("multipart/*;; x-java-content-handler=com.sun.mail.handlers.multipart_mixed");
+        mc.addMailcap("message/rfc822;; x-java-content-handler=com.sun.mail.handlers.message_rfc822");
+        dataHandler.setCommandMap(mc);
+        msg.setDataHandler(bodyPart.getDataHandler());
+        msg.saveChanges();
+
         if (algorithm.isAuthenticated()) {
             SMIMEAuthEnvelopedGenerator authEnvDataGenerator = new SMIMEAuthEnvelopedGenerator();
             authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
-            mp = authEnvDataGenerator.generate(msg, encryptor);
+            return authEnvDataGenerator.generate(msg, encryptor);
         } else {
             SMIMEEnvelopedGenerator authEnvDataGenerator = new SMIMEEnvelopedGenerator();
             authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
-            mp = authEnvDataGenerator.generate(msg, encryptor);
+            return authEnvDataGenerator.generate(msg, encryptor);
         }
+    }
 
+    public void encrypt() throws IOException, CMSException, MessagingException, SMIMEException {
         // Get a Session object and create the mail message
         Properties props = System.getProperties();
         Session session = Session.getDefaultInstance(props, null);
@@ -91,6 +132,10 @@ public class SMIMEEnvelope extends SMIMEData {
         body.setFrom(fromUser);
         body.setRecipient(Message.RecipientType.TO, toUser);
         body.setSubject(options.getMailSubject());
+
+        MimeBodyPart msg = createMimeBodyPart();
+        MimeBodyPart mp = generateBodyPart(msg);
+
         Object content = mp.getContent();
         String contentType = mp.getContentType();
         body.setContent(content, contentType);
