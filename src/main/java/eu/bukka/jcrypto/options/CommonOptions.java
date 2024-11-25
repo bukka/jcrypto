@@ -7,6 +7,10 @@ import java.io.OutputStream;
 public interface CommonOptions {
     String getForm();
 
+    String getProvider();
+
+    File getProviderConfigFile();
+
     File getInputFile();
 
     byte[] getInputData() throws IOException;

@@ -1,0 +1,93 @@
+package eu.bukka.jcrypto.cli;
+
+import eu.bukka.jcrypto.cipher.CipherEnvelope;
+import eu.bukka.jcrypto.options.PKeyOptions;
+import eu.bukka.jcrypto.pkey.SignatureEnvelope;
+import picocli.CommandLine;
+
+import java.io.File;
+import java.util.Objects;
+import java.util.concurrent.Callable;
+
+@CommandLine.Command(name = "pkey", mixinStandardHelpOptions = true,
+        description = "Public and private key utils.")
+public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKeyOptions {
+    @CommandLine.Parameters(index = "0", description = "Action")
+    private String action;
+
+    @CommandLine.Option(names = {"-a", "--algorithm"}, description = "Cipher algorithm to use")
+    private String algorithm;
+
+    @CommandLine.Option(names = {"--private-key-file"}, description = "Private key file")
+    private File privateKeyFile;
+
+    @CommandLine.Option(names = {"--private-key-alias"}, description = "Private key alias")
+    private String privateKeyAlias;
+
+    @CommandLine.Option(names = {"--public-key-file"}, description = "Public key file")
+    private File publicKeyFile;
+
+    @CommandLine.Option(names = {"--public-key-alias"}, description = "Public key alias")
+    private String publicKeyAlias;
+
+    @CommandLine.Option(names = {"--key-store-name"}, description = "Key store name")
+    private String keyStoreName;
+
+    @CommandLine.Option(names = {"--key-store-password"}, description = "Key store password (PIN for PKCS11)")
+    private String keyStorePassword;
+
+    @Override
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    @Override
+    public String getPrivateKeyAlias() {
+        return privateKeyAlias;
+    }
+
+    @Override
+    public String getPublicKeyAlias() {
+        return publicKeyAlias;
+    }
+
+    @Override
+    public File getPrivateKeyFile() {
+        return privateKeyFile;
+    }
+
+    @Override
+    public File getPublicKeyFile() {
+        return publicKeyFile;
+    }
+
+    @Override
+    public String getKeyStoreName() {
+        return keyStoreName;
+    }
+
+    @Override
+    public String getKeyStorePassword() {
+        return keyStorePassword;
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        addSecurityProviders();
+        if (keyStoreName == null && Objects.equals(getProvider(), "PKCS11")) {
+            keyStoreName = "PKCS11";
+        }
+        switch (action) {
+            case "sign":
+                new SignatureEnvelope(this).sign();
+                break;
+            case "verify":
+                new SignatureEnvelope(this).verify();
+                break;
+            default:
+                throw new Exception("Unknown pkey action: " + action);
+        }
+
+        return 0;
+    }
+}
