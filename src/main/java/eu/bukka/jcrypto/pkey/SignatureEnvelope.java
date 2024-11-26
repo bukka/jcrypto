@@ -12,7 +12,7 @@ public class SignatureEnvelope extends PKeyEnvelope {
         super(options);
     }
 
-    private Signature getSignature() throws NoSuchAlgorithmException, NoSuchProviderException {
+    private Signature getSignature() throws NoSuchAlgorithmException {
         if (signature == null) {
             Provider provider = options.getProvider();
             if (provider == null) {

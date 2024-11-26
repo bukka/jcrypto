@@ -23,8 +23,6 @@ import java.util.Date;
 
 public class KeyGeneratorEnvelope extends PKeyEnvelope {
 
-    private KeyStore keyStore;
-
     public KeyGeneratorEnvelope(PKeyOptions options) {
         super(options);
     }
@@ -37,13 +35,6 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
         saveKeyPair(keyPair);
     }
 
-    private void loadKeyStore() throws GeneralSecurityException, IOException {
-        if (keyStore == null) {
-            String keyStorePassword = options.getKeyStorePassword();
-            keyStore = KeyStore.getInstance(options.getKeyStoreName());
-            keyStore.load(null, keyStorePassword != null ? keyStorePassword.toCharArray() : null);
-        }
-    }
 
     private KeyPair generateKeyPair() throws GeneralSecurityException, IOException {
         String algorithm = options.getAlgorithm();
