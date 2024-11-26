@@ -57,9 +57,13 @@ public class CommonCommand implements CommonOptions {
         return providerConfigFile;
     }
 
+    protected byte[] getFileData(File file) throws IOException {
+        return Files.readAllBytes(file.toPath());
+    }
+
     @Override
     public byte[] getInputData() throws IOException {
-        return Files.readAllBytes(getInputFile().toPath());
+        return getFileData(getInputFile());
     }
 
     @Override
@@ -81,9 +85,12 @@ public class CommonCommand implements CommonOptions {
             if (providerConfigFile == null) {
                 throw new SecurityException("PKCS11 provider config file not set");
             }
-            Provider p = Security.getProvider("SunPKCS11");
-            p = p.configure(providerConfigFile.getAbsolutePath());
-            Security.addProvider(p);
+            Provider pkcs11Provider = Security.getProvider("SunPKCS11");
+            if (pkcs11Provider == null) {
+                throw new SecurityException("SunPKCS11 provider not available");
+            }
+            pkcs11Provider = pkcs11Provider.configure(providerConfigFile.getAbsolutePath());
+            Security.addProvider(pkcs11Provider);
         }
     }
 

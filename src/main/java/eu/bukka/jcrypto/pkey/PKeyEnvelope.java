@@ -27,21 +27,20 @@ public class PKeyEnvelope {
         return keyStore;
     }
 
-    protected PublicKey getPublicKey() throws Exception {
-        File publicKeyFile = options.getPublicKeyFile();
-        if (publicKeyFile == null) {
+    protected PublicKey getPublicKey() throws GeneralSecurityException, IOException {
+        if (options.getPublicKeyFile() == null) {
             String alias = options.getPublicKeyAlias();
             if (alias == null) {
-                throw new Exception("No alias or file for public key");
+                throw new SecurityException("No alias or file for public key");
             }
             return getPublicKeyFromKeyStore(alias);
         } else {
-            return getPublicKeyFromFile(publicKeyFile);
+            return getPublicKeyFromFile();
         }
     }
 
-    private PublicKey getPublicKeyFromFile(File publicKeyFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] publicKeyBytes = Files.readAllBytes(publicKeyFile.toPath());
+    private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
+        byte[] publicKeyBytes = options.getPublicKeyFileData();
         byte[] keyBytes = Base64.getDecoder().decode(publicKeyBytes);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm()); // or "DSA", "EC" depending on your key type
@@ -53,29 +52,28 @@ public class PKeyEnvelope {
         return keyStore.getCertificate(publicKeyAlias).getPublicKey();
     }
 
-    protected PrivateKey getPrivateKey() throws Exception {
-        File privateKeyFile = options.getPrivateKeyFile();
-        if (privateKeyFile == null) {
+    protected PrivateKey getPrivateKey() throws GeneralSecurityException, IOException {
+        if (options.getPrivateKeyFile() == null) {
             String alias = options.getPrivateKeyAlias();
             if (alias == null) {
-                throw new Exception("No alias or file for private key");
+                throw new SecurityException("No alias or file for private key");
             }
             return getPrivateKeyFromKeyStore(alias);
         } else {
-            return getPrivateKeyFromFile(privateKeyFile);
+            return getPrivateKeyFromFile();
         }
     }
 
-    private PrivateKey getPrivateKeyFromFile(File privateKeyFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] privateKeyBytes = Files.readAllBytes(privateKeyFile.toPath());
+    private PrivateKey getPrivateKeyFromFile() throws IOException, GeneralSecurityException {
+        byte[] privateKeyBytes = options.getPrivateKeyFileData();
         byte[] keyBytes = Base64.getDecoder().decode(privateKeyBytes);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm()); // or "DSA", "EC" depending on your key type
         return keyFactory.generatePrivate(keySpec);
     }
 
-    private PrivateKey getPrivateKeyFromKeyStore(String publicKeyAlias) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+    private PrivateKey getPrivateKeyFromKeyStore(String publicKeyAlias) throws GeneralSecurityException {
         KeyStore keyStore = getKeyStore();
-        return (PrivateKey) keyStore.getKey(null, options.getKeyStorePassword().toCharArray());
+        return (PrivateKey) keyStore.getKey(publicKeyAlias, options.getKeyStorePassword().toCharArray());
     }
 }

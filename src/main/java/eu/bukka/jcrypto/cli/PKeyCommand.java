@@ -6,6 +6,7 @@ import eu.bukka.jcrypto.pkey.SignatureEnvelope;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
@@ -29,6 +30,9 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
 
     @CommandLine.Option(names = {"--public-key-alias"}, description = "Public key alias")
     private String publicKeyAlias;
+
+    @CommandLine.Option(names = {"--signature-file"}, description = "Public key file")
+    private File signatureFile;
 
     @CommandLine.Option(names = {"--key-store-name"}, description = "Key store name")
     private String keyStoreName;
@@ -57,8 +61,28 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
     }
 
     @Override
+    public byte[] getPrivateKeyFileData() throws IOException {
+        return getFileData(privateKeyFile);
+    }
+
+    @Override
     public File getPublicKeyFile() {
         return publicKeyFile;
+    }
+
+    @Override
+    public byte[] getPublicKeyFileData() throws IOException {
+        return getFileData(publicKeyFile);
+    }
+
+    @Override
+    public File getSignatureFile() {
+        return signatureFile;
+    }
+
+    @Override
+    public byte[] getSignatureFileData() throws IOException {
+        return getFileData(signatureFile);
     }
 
     @Override
