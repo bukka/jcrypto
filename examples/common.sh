@@ -54,16 +54,34 @@ function jcrypto_dump_smime {
   rm "$jcrypto_smime_file_b64"
 }
 
-function jcrypto_pkcs11_setup {
+function jcrypto_find_first_existing_path {
+  local -n paths=$1
+  for path in "${paths[@]}"; do
+    if [ -f "$path" ]; then
+      echo "$path"
+      return 0
+    fi
+  done
+  return 1
+}
+
+function jcrypto_pkcs11_make_java_config {
+  jcrypto_pkcs11_name=$1
+  jcrypto_pkcs11_library="$2"
+  jcrypto_pkcs11_java_config="$jcrypto_pkcs11_prefix-pkcs11.cfg"
+
+  # Create config for SunPKCS11 Java provider
+  sed "s|__PKCS11_LIBRARY__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/pkcs11.cfg.in" > "$jcrypto_pkcs11_java_config"
+  sed -i "s|__PKCS11_NAME__|$jcrypto_pkcs11_name|g" "$jcrypto_pkcs11_java_config"
+}
+
+function jcrypto_pkcs11_softhsm2_setup {
   if [ -z "$1" ]; then
     echo "Error: PKCS#11 test name not set."
     exit 1
   fi
-  jcrypto_pkcs11_test_name=$1
-  jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$jcrypto_pkcs11_test_name"
   jcrypto_pkcs11_softhsm2_tokens="$jcrypto_pkcs11_prefix-tokens"
   jcrypto_pkcs11_softhsm2_config="$jcrypto_pkcs11_prefix-softhsm2.conf"
-  jcrypto_pkcs11_java_config="$jcrypto_pkcs11_prefix-pkcs11.cfg"
 
   # Create and set SoftHSM2 config
   sed "s|__TOKENS_DIR__|$jcrypto_pkcs11_softhsm2_tokens|g" "$jcrypto_conf_dir/softhsm2.conf.in" > "$jcrypto_pkcs11_softhsm2_config"
@@ -77,23 +95,14 @@ function jcrypto_pkcs11_setup {
       "/usr/local/lib/softhsm/libsofthsm2.so"
       "/usr/lib/softhsm/libsofthsm2.so"
   )
-  jcrypto_pkcs11_library=""
-  for path in "${jcrypto_pkcs11_softhsm2_default_paths[@]}"; do
-      if [ -f "$path" ]; then
-          jcrypto_pkcs11_library="$path"
-          break
-      fi
-  done
-  if [ -z "$jcrypto_pkcs11_library" ]; then
+
+  jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_softhsm2_default_paths)
+  if [ $? -ne 0 ]; then
       echo "Error: PKCS#11 module not found in default paths."
       echo "Please install SoftHSM2 or specify the module path."
       exit 1
   fi
   echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
-
-  # Create config for SunPKCS11 Java provider
-  sed "s|__PKCS11_LIBRARY__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/pkcs11.cfg.in" > "$jcrypto_pkcs11_java_config"
-  sed -i "s|__PKCS11_NAME__|$jcrypto_pkcs11_name|g" "$jcrypto_pkcs11_java_config"
 
   if [ -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
     rm -rf "$jcrypto_pkcs11_softhsm2_tokens"
@@ -105,6 +114,40 @@ function jcrypto_pkcs11_setup {
       echo "Error: Failed to initialize token."
       exit 1
   }
+}
+
+jcrypto_pkcs11_proxy_socket="tcp://127.0.0.1:2346"
+
+function jcrypto_pkcs11_proxy_client_setup {
+  # Find and check PKCS#11 name and library
+    jcrypto_pkcs11_name=PKCS11Proxy
+    echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
+    jcrypto_pkcs11_proxy_default_paths=(
+        "/usr/local/lib/libpkcs11-proxy.so"
+        "/lib/libpkcs11-proxy.so"
+        "/usr/lib/libpkcs11-proxy.so"
+    )
+    jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_proxy_default_paths)
+    if [ $? -ne 0 ]; then
+        echo "Error: PKCS#11 module not found in default paths."
+        echo "Please install PKCS11-PROXY or specify the module path."
+        exit 1
+    fi
+    echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
+
+    export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
+}
+
+function jcrypto_pkcs11_setup {
+  jcrypto_pkcs11_test_name=$1
+  jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$jcrypto_pkcs11_test_name"
+  if [ -n "$JCRYPTO_PKCS11_PROXY" ]; then
+    jcrypto_pkcs11_proxy_client_setup "$@"
+  else
+    jcrypto_pkcs11_softhsm2_setup "$@"
+  fi
+
+  jcrypto_pkcs11_make_java_config $jcrypto_pkcs11_name "$jcrypto_pkcs11_library"
 }
 
 function jcrypto_clean_tmp {
