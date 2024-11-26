@@ -2,6 +2,7 @@ package eu.bukka.jcrypto.cli;
 
 import eu.bukka.jcrypto.cipher.CipherEnvelope;
 import eu.bukka.jcrypto.options.PKeyOptions;
+import eu.bukka.jcrypto.pkey.KeyGeneratorEnvelope;
 import eu.bukka.jcrypto.pkey.SignatureEnvelope;
 import picocli.CommandLine;
 
@@ -39,6 +40,9 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
 
     @CommandLine.Option(names = {"--key-store-password"}, description = "Key store password (PIN for PKCS11)")
     private String keyStorePassword;
+
+    @CommandLine.Option(names = {"--parameters"}, description = "Algorithm-specific parameters (e.g., curve name for EC)")
+    private String parameters;
 
     @Override
     public String getAlgorithm() {
@@ -96,6 +100,11 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
     }
 
     @Override
+    public String getParameters() {
+        return parameters;
+    }
+
+    @Override
     public Integer call() throws Exception {
         addSecurityProviders();
         if (keyStoreName == null && Objects.equals(getProvider(), "PKCS11")) {
@@ -107,6 +116,9 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
                 break;
             case "verify":
                 new SignatureEnvelope(this).verify();
+                break;
+            case "generate":
+                new KeyGeneratorEnvelope(this).generate();
                 break;
             default:
                 throw new Exception("Unknown pkey action: " + action);
