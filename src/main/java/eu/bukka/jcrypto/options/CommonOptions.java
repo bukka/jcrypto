@@ -3,11 +3,14 @@ package eu.bukka.jcrypto.options;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.Provider;
 
 public interface CommonOptions {
     String getForm();
 
-    String getProvider();
+    String getProviderName();
+
+    Provider getProvider();
 
     File getProviderConfigFile();
 

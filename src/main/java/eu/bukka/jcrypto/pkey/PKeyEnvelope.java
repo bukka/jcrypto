@@ -2,14 +2,15 @@ package eu.bukka.jcrypto.pkey;
 
 import eu.bukka.jcrypto.options.PKeyOptions;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
+import java.security.KeyFactory;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 
 public class PKeyEnvelope {
     protected PKeyOptions options;
@@ -42,7 +43,7 @@ public class PKeyEnvelope {
     private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
         byte[] publicKeyBytes = options.getPublicKeyFileData();
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm()); // or "DSA", "EC" depending on your key type
+        KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm());
         return keyFactory.generatePublic(keySpec);
     }
 
@@ -66,7 +67,7 @@ public class PKeyEnvelope {
     private PrivateKey getPrivateKeyFromFile() throws IOException, GeneralSecurityException {
         byte[] privateKeyBytes = options.getPrivateKeyFileData();
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm()); // or "DSA", "EC" depending on your key type
+        KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm());
         return keyFactory.generatePrivate(keySpec);
     }
 

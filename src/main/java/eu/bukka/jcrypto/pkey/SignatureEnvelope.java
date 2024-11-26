@@ -3,9 +3,7 @@ package eu.bukka.jcrypto.pkey;
 import eu.bukka.jcrypto.options.PKeyOptions;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
+import java.security.*;
 
 public class SignatureEnvelope extends PKeyEnvelope {
     Signature signature;
@@ -14,9 +12,14 @@ public class SignatureEnvelope extends PKeyEnvelope {
         super(options);
     }
 
-    private Signature getSignature() throws NoSuchAlgorithmException {
+    private Signature getSignature() throws NoSuchAlgorithmException, NoSuchProviderException {
         if (signature == null) {
-            signature = Signature.getInstance(options.getAlgorithm());
+            Provider provider = options.getProvider();
+            if (provider == null) {
+                signature = Signature.getInstance(options.getAlgorithm());
+            } else {
+                signature = Signature.getInstance(options.getAlgorithm(), provider);
+            }
         }
         return signature;
     }

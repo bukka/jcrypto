@@ -1,6 +1,5 @@
 package eu.bukka.jcrypto.cli;
 
-import eu.bukka.jcrypto.cipher.CipherEnvelope;
 import eu.bukka.jcrypto.options.PKeyOptions;
 import eu.bukka.jcrypto.pkey.KeyGeneratorEnvelope;
 import eu.bukka.jcrypto.pkey.SignatureEnvelope;
@@ -106,8 +105,8 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
 
     @Override
     public Integer call() throws Exception {
-        addSecurityProviders();
-        if (keyStoreName == null && Objects.equals(getProvider(), "PKCS11")) {
+        addSecurityProviders(true);
+        if (keyStoreName == null && Objects.equals(getProvider(), "SunPKCS11")) {
             keyStoreName = "PKCS11";
         }
         switch (action) {
