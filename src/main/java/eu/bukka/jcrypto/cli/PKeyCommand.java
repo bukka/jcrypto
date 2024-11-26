@@ -17,7 +17,7 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
     @CommandLine.Parameters(index = "0", description = "Action")
     private String action;
 
-    @CommandLine.Option(names = {"-a", "--algorithm"}, description = "Cipher algorithm to use")
+    @CommandLine.Option(names = {"-a", "--algorithm"}, description = "Algorithm to use")
     private String algorithm;
 
     @CommandLine.Option(names = {"--private-key-file"}, description = "Private key file")

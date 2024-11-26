@@ -1,9 +1,6 @@
 package eu.bukka.jcrypto;
 
-import eu.bukka.jcrypto.cli.CMSCommand;
-import eu.bukka.jcrypto.cli.CipherCommand;
-import eu.bukka.jcrypto.cli.MailCommand;
-import eu.bukka.jcrypto.cli.TopCommand;
+import eu.bukka.jcrypto.cli.*;
 import picocli.CommandLine;
 
 public class Main {
@@ -11,7 +8,8 @@ public class Main {
         CommandLine cmd = new CommandLine(new TopCommand())
                 .addSubcommand("cipher", new CipherCommand())
                 .addSubcommand("cms", new CMSCommand())
-                .addSubcommand("mail", new MailCommand());
+                .addSubcommand("mail", new MailCommand())
+                .addSubcommand("pkey", new PKeyCommand());
 
         int exitCode = cmd.execute(args);
 
