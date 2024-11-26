@@ -20,3 +20,5 @@ jcrypto pkey sign -i "$jcrypto_this_dir/in-pkey-data.txt" -a ECDSA -o "$jcrypto_
 echo "JCRYPTO VERIFY"
 jcrypto pkey verify -i "$jcrypto_this_dir/in-pkey-data.txt" -a ECDSA --signature-file "$jcrypto_out_sig_file" \
   --public-key-file "$jcrypto_pub_key"
+
+rm "$jcrypto_out_sig_file"

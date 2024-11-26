@@ -21,11 +21,13 @@ public class CommonCommand implements CommonOptions {
     @CommandLine.Option(names = {"-f", "--form"}, description = "Input and output form")
     private String form = "PEM";
 
-    @CommandLine.Option(names = {"--provider"}, description = "Preferred provider name")
-    private String provider = "BC";
+    @CommandLine.Option(names = {"--provider-name"}, description = "Preferred provider name")
+    private String providerName = "BC";
 
     @CommandLine.Option(names = {"--provider-config-file"}, description = "Preferred provider config file")
     private File providerConfigFile;
+
+    private Provider provider;
 
     @Override
     public File getInputFile() {
@@ -48,7 +50,12 @@ public class CommonCommand implements CommonOptions {
     }
 
     @Override
-    public String getProvider() {
+    public String getProviderName() {
+        return providerName;
+    }
+
+    @Override
+    public Provider getProvider() {
         return provider;
     }
 
@@ -78,19 +85,20 @@ public class CommonCommand implements CommonOptions {
 
     protected void addSecurityProviders(boolean alwaysAddBouncyCastle) throws SecurityException {
         Security.setProperty("crypto.policy", "unlimited");
-        if (alwaysAddBouncyCastle || Objects.equals(provider, "BC")) {
-            Security.addProvider(new BouncyCastleProvider());
+        if (alwaysAddBouncyCastle || Objects.equals(providerName, "BC")) {
+            provider = new BouncyCastleProvider();
+            Security.addProvider(provider);
         }
-        if (Objects.equals(provider, "PKCS11")) {
+        if (Objects.equals(providerName, "SunPKCS11")) {
             if (providerConfigFile == null) {
-                throw new SecurityException("PKCS11 provider config file not set");
+                throw new SecurityException("SunPKCS11 provider config file not set");
             }
-            Provider pkcs11Provider = Security.getProvider("SunPKCS11");
-            if (pkcs11Provider == null) {
+            provider = Security.getProvider("SunPKCS11");
+            if (provider == null) {
                 throw new SecurityException("SunPKCS11 provider not available");
             }
-            pkcs11Provider = pkcs11Provider.configure(providerConfigFile.getAbsolutePath());
-            Security.addProvider(pkcs11Provider);
+            provider = provider.configure(providerConfigFile.getAbsolutePath());
+            Security.addProvider(provider);
         }
     }
 

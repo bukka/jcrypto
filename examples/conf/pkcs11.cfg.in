@@ -1,0 +1,2 @@
+name = __PKCS11_NAME__
+library = __PKCS11_LIBRARY__

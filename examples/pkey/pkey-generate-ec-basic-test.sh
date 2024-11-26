@@ -7,12 +7,12 @@ jcrypto_curve_name=$1
 if [ -z "$jcrypto_curve_name" ]; then
   jcrypto_curve_name="secp256r1"
 fi
-jcrypto_out_pub_key_file="$jcrypto_this_dir/out-pkey-ec-${jcrypto_curve_name}-pub-key.der"
-jcrypto_out_priv_key_file="$jcrypto_this_dir/out-pkey-ec-${jcrypto_curve_name}-priv-key.der"
+jcrypto_out_pub_key_file="$jcrypto_this_dir/out-pkey-ec-${jcrypto_curve_name}-pub-key-basic.der"
+jcrypto_out_priv_key_file="$jcrypto_this_dir/out-pkey-ec-${jcrypto_curve_name}-priv-key-basic.der"
 
 echo "JCRYPTO GENERATE KEY"
 jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-file "$jcrypto_out_priv_key_file" \
-  --algorithm EC --parameters $jcrypto_curve_name
+  --algorithm EC --parameters $jcrypto_curve_name --key-store-password 1234
 
 jcrypto_cat "$jcrypto_out_pub_key_file" | base64
 jcrypto_cat "$jcrypto_out_priv_key_file"  | base64
