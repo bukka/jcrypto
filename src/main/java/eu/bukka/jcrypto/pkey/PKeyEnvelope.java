@@ -41,8 +41,7 @@ public class PKeyEnvelope {
 
     private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
         byte[] publicKeyBytes = options.getPublicKeyFileData();
-        byte[] keyBytes = Base64.getDecoder().decode(publicKeyBytes);
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm()); // or "DSA", "EC" depending on your key type
         return keyFactory.generatePublic(keySpec);
     }
@@ -66,8 +65,7 @@ public class PKeyEnvelope {
 
     private PrivateKey getPrivateKeyFromFile() throws IOException, GeneralSecurityException {
         byte[] privateKeyBytes = options.getPrivateKeyFileData();
-        byte[] keyBytes = Base64.getDecoder().decode(privateKeyBytes);
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance(options.getAlgorithm()); // or "DSA", "EC" depending on your key type
         return keyFactory.generatePrivate(keySpec);
     }

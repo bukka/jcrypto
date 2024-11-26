@@ -12,7 +12,7 @@ import java.security.Security;
 import java.util.Objects;
 
 public class CommonCommand implements CommonOptions {
-    @CommandLine.Option(names = {"-i", "--in"}, description = "Input file", required = true)
+    @CommandLine.Option(names = {"-i", "--in"}, description = "Input file")
     private File inputFile;
 
     @CommandLine.Option(names = {"-o", "--out"}, description = "Output file")
