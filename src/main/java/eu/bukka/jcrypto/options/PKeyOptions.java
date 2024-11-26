@@ -25,4 +25,6 @@ public interface PKeyOptions extends CommonOptions {
     String getKeyStoreName();
 
     String getKeyStorePassword();
+
+    String getParameters();
 }
