@@ -1,2 +1,10 @@
 name = __PKCS11_NAME__
 library = __PKCS11_LIBRARY__
+attributes(*, CKO_PRIVATE_KEY, *) = {
+    CKA_SIGN = true
+    CKA_DECRYPT = true
+    CKA_DERIVE = true
+}
+attributes(*, CKO_SECRET_KEY, *) = {
+    CKA_EXTRACTABLE = true
+}
