@@ -1,6 +1,7 @@
 package eu.bukka.jcrypto.cli;
 
 import eu.bukka.jcrypto.options.PKeyOptions;
+import eu.bukka.jcrypto.pkey.KeyAgreementEnvelope;
 import eu.bukka.jcrypto.pkey.KeyGeneratorEnvelope;
 import eu.bukka.jcrypto.pkey.SignatureEnvelope;
 import picocli.CommandLine;
@@ -118,6 +119,9 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
                 break;
             case "generate":
                 new KeyGeneratorEnvelope(this).generate();
+                break;
+            case "derive":
+                new KeyAgreementEnvelope(this).derive();
                 break;
             default:
                 throw new Exception("Unknown pkey action: " + action);

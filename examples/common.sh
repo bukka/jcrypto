@@ -35,6 +35,11 @@ function jcrypto_cat {
   echo ""
 }
 
+# Cat file, base64 encode it and print new line
+function jcrypto_cat_b64 {
+  cat $1 | base64
+}
+
 function jcrypto_dump_pem {
   echo "=== ASN.1 ==="
   jcrypto_openssl asn1parse -i -in "$1"

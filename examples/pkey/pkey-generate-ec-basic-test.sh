@@ -14,7 +14,7 @@ echo "JCRYPTO GENERATE KEY"
 jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-file "$jcrypto_out_priv_key_file" \
   --algorithm EC --parameters $jcrypto_curve_name --key-store-password 1234
 
-jcrypto_cat "$jcrypto_out_pub_key_file" | base64
-jcrypto_cat "$jcrypto_out_priv_key_file"  | base64
+jcrypto_cat_b64 "$jcrypto_out_pub_key_file"
+jcrypto_cat_b64 "$jcrypto_out_priv_key_file"
 
 rm "$jcrypto_out_pub_key_file" "$jcrypto_out_priv_key_file"
