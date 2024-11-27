@@ -81,10 +81,6 @@ function jcrypto_pkcs11_make_java_config {
 }
 
 function jcrypto_pkcs11_softhsm2_setup {
-  if [ -z "$1" ]; then
-    echo "Error: PKCS#11 test name not set."
-    exit 1
-  fi
   jcrypto_pkcs11_softhsm2_tokens="$jcrypto_pkcs11_prefix-tokens"
   jcrypto_pkcs11_softhsm2_config="$jcrypto_pkcs11_prefix-softhsm2.conf"
 
@@ -143,7 +139,18 @@ function jcrypto_pkcs11_proxy_client_setup {
     export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
 }
 
+function jcrypto_pkcs11_proxy_daemon_setup {
+  jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/pkey-pkcs11-proxy-daemon"
+  jcrypto_pkcs11_softhsm2_setup "$@"
+  export PKCS11_DAEMON_SOCKET=$jcrypto_pkcs11_proxy_socket
+  echo "Using PKCS11_DAEMON_SOCKET=$jcrypto_pkcs11_proxy_socket"
+}
+
 function jcrypto_pkcs11_setup {
+    if [ -z "$1" ]; then
+      echo "Error: PKCS#11 test name not set."
+      exit 1
+    fi
   jcrypto_pkcs11_test_name=$1
   jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$jcrypto_pkcs11_test_name"
   if [ -n "$JCRYPTO_PKCS11_PROXY" ]; then
