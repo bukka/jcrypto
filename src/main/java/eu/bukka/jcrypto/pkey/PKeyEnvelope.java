@@ -19,7 +19,8 @@ public class PKeyEnvelope {
     protected void loadKeyStore() throws GeneralSecurityException, IOException {
         if (keyStore == null) {
             String keyStorePassword = options.getKeyStorePassword();
-            keyStore = KeyStore.getInstance(options.getKeyStoreName());
+            String keyStoreName = options.getKeyStoreName();
+            keyStore = KeyStore.getInstance(keyStoreName, options.getProvider());
             keyStore.load(null, keyStorePassword != null ? keyStorePassword.toCharArray() : null);
         }
     }

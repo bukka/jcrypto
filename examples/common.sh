@@ -150,6 +150,17 @@ function jcrypto_pkcs11_setup {
   jcrypto_pkcs11_make_java_config $jcrypto_pkcs11_name "$jcrypto_pkcs11_library"
 }
 
+function jcrypto_pkcs11_generate_key {
+  key_type="$1"
+  key_label="$2"
+
+  pkcs11-tool --module "$jcrypto_pkcs11_library" --login --pin 1234 --keypairgen --key-type "$key_type" \
+    --id 01 --label "$key_label" || {
+      echo "Error: Failed to generate key pair."
+      exit 1
+  }
+}
+
 function jcrypto_clean_tmp {
   rm -rf "$jcrypto_tmp_dir"
 }
