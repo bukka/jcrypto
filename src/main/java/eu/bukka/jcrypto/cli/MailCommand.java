@@ -128,6 +128,7 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
 
     @Override
     public Integer call() throws Exception {
+        addSecurityProviders(true);
         switch (mode) {
             case "encrypt":
                 new SMIMEEnvelope(this).encrypt();

@@ -91,6 +91,7 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
 
     @Override
     public Integer call() throws Exception {
+        addSecurityProviders(true);
         switch (mode) {
             case "encrypt":
                 new CMSEnvelope(this).encrypt();

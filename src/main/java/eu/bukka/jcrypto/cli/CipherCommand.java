@@ -57,6 +57,7 @@ public class CipherCommand extends CommonCommand implements Callable<Integer>, C
 
     @Override
     public Integer call() throws Exception {
+        addSecurityProviders();
         switch (action) {
             case "encrypt":
                 new CipherEnvelope(this).encrypt();
