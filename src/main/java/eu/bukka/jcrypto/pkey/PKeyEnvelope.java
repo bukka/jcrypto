@@ -56,11 +56,14 @@ public class PKeyEnvelope {
         }
     }
 
-    private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
-        byte[] publicKeyBytes = options.getPublicKeyFileData();
+    protected PublicKey getPublicKeyFromBytes(byte[] publicKeyBytes) throws GeneralSecurityException {
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
         KeyFactory keyFactory = getKeyFactory(options.getAlgorithm());
         return keyFactory.generatePublic(keySpec);
+    }
+
+    private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
+        return getPublicKeyFromBytes(options.getPublicKeyFileData());
     }
 
     private PublicKey getPublicKeyFromKeyStore(String publicKeyAlias) throws GeneralSecurityException, IOException {

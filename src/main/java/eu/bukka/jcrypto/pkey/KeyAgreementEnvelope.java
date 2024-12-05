@@ -32,20 +32,36 @@ public class KeyAgreementEnvelope extends PKeyEnvelope {
      * @throws GeneralSecurityException
      * @throws IOException
      */
-    public void derive() throws GeneralSecurityException, IOException {
+    private byte[] derive(PublicKey peerPublicKey) throws GeneralSecurityException, IOException {
         // Initialize KeyAgreement with the private key
         PrivateKey privateKey = getPrivateKey();
         KeyAgreement keyAgreement = getKeyAgreement();
         keyAgreement.init(privateKey);
 
         // Load peer's public key
-        PublicKey peerPublicKey = getPublicKey();
         keyAgreement.doPhase(peerPublicKey, true);
 
-        // Generate shared secret
-        byte[] sharedSecret = keyAgreement.generateSecret();
+        // Generate and returns shared secret
+        return keyAgreement.generateSecret();
+    }
 
-        // Output the shared secret
-        options.writeOutputData(sharedSecret);
+    /**
+     * Derive shared secret.
+     *
+     * @throws GeneralSecurityException
+     * @throws IOException
+     */
+    public void derive() throws GeneralSecurityException, IOException {
+        options.writeOutputData(derive(getPublicKey()));
+    }
+
+    /**
+     * Derive shared secret.
+     *
+     * @throws GeneralSecurityException
+     * @throws IOException
+     */
+    public byte[] derive(byte[] pubKeyBytes) throws GeneralSecurityException, IOException {
+        return derive(getPublicKeyFromBytes(pubKeyBytes));
     }
 }

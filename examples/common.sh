@@ -45,6 +45,10 @@ function jcrypto_dump_pem {
   jcrypto_openssl asn1parse -i -in "$1"
 }
 
+function jcrypto_info {
+  echo "JCRYPTO CMD: $jcrypto_cmd"
+}
+
 function jcrypto_dump_smime {
   jcrypto_smime_file_txt="$1"
   jcrypto_smime_file_b64="$1.b64"
