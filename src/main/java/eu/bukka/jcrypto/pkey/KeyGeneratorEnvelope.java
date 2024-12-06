@@ -40,27 +40,16 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
     }
 
     private KeyPair generateKeyPair() throws GeneralSecurityException, IOException {
-        String algorithm = options.getAlgorithm();
+        String algorithm = getBaseAlgorithm(options.getAlgorithm());
         String parameters = options.getParameters();
         Provider provider = options.getProvider();
 
         KeyPairGenerator keyPairGenerator;
-
-        try {
-            if (provider != null) {
-                loadKeyStore();
-                keyPairGenerator = KeyPairGenerator.getInstance(algorithm, provider);
-            } else {
-                keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
-            }
-        } catch (NoSuchAlgorithmException e) {
-            if (provider != null) {
-                System.out.println("Provider: " + provider.getName());
-                provider.getServices().forEach(service -> System.out.println(service.getType() + ": " + service.getAlgorithm()));
-            }
-            throw e;
-        } catch (GeneralSecurityException|IOException e) {
-            throw e;
+        if (provider != null) {
+            loadKeyStore();
+            keyPairGenerator = KeyPairGenerator.getInstance(algorithm, provider);
+        } else {
+            keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
         }
 
         if ("EC".equalsIgnoreCase(algorithm) && parameters != null) {
