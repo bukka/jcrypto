@@ -24,18 +24,26 @@ public class SignatureEnvelope extends PKeyEnvelope {
         return signature;
     }
 
-    public void sign() throws GeneralSecurityException, IOException {
+    public byte[] sign(byte[] data) throws GeneralSecurityException, IOException {
         Signature sig = getSignature();
         sig.initSign(getPrivateKey());
-        sig.update(options.getInputData());
-        options.writeOutputData(sig.sign());
+        sig.update(data);
+        return sig.sign();
+    }
+
+    public void sign() throws GeneralSecurityException, IOException {
+        options.writeOutputData(sign(options.getInputData()));
+    }
+
+    public boolean verify(byte[] data, byte[] signature) throws GeneralSecurityException, IOException  {
+        Signature sig = getSignature();
+        sig.initVerify(getPublicKey());
+        sig.update(data);
+        return sig.verify(signature);
     }
 
     public void verify() throws GeneralSecurityException, IOException  {
-        Signature sig = getSignature();
-        sig.initVerify(getPublicKey());
-        sig.update(options.getInputData());
-        if (!sig.verify(options.getSignatureFileData())) {
+        if (!verify(options.getInputData(), options.getSignatureFileData())) {
             throw new SecurityException("Signature verification failed");
         }
     }

@@ -19,6 +19,13 @@ fi
 # this assumes that `mvn clean compile assembly:single` has been run first
 jcrypto_cmd="java -cp $jcrypto_root/target/jcrypto-1.0-SNAPSHOT-jar-with-dependencies.jar eu.bukka.jcrypto.Main"
 
+jcrypto_pkcs11_proxy_protocol=tcp
+if [[ "$JCRYPTO_PKCS11_PROXY" == "tls" ]]; then
+  jcrypto_pkcs11_proxy_protocol="tls"
+  jcrypto_pkcs11_proxy_psk_file="$jcrypto_tmp_dir/pkcs11-proxy-psk.txt"
+fi
+jcrypto_pkcs11_proxy_socket="$jcrypto_pkcs11_proxy_protocol://127.0.0.1:2346"
+
 function jcrypto {
   echo jcrypto $@
   $jcrypto_cmd $@
@@ -43,6 +50,10 @@ function jcrypto_cat_b64 {
 function jcrypto_dump_pem {
   echo "=== ASN.1 ==="
   jcrypto_openssl asn1parse -i -in "$1"
+}
+
+function jcrypto_info {
+  echo "JCRYPTO CMD: $jcrypto_cmd"
 }
 
 function jcrypto_dump_smime {
@@ -93,15 +104,15 @@ function jcrypto_pkcs11_softhsm2_setup {
   jcrypto_pkcs11_name=SoftHSM2
   echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
   jcrypto_pkcs11_softhsm2_default_paths=(
-      "/usr/local/lib/softhsm/libsofthsm2.so"
-      "/usr/lib/softhsm/libsofthsm2.so"
+    "/usr/local/lib/softhsm/libsofthsm2.so"
+    "/usr/lib/softhsm/libsofthsm2.so"
   )
 
   jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_softhsm2_default_paths)
   if [ $? -ne 0 ]; then
-      echo "Error: PKCS#11 module not found in default paths."
-      echo "Please install SoftHSM2 or specify the module path."
-      exit 1
+    echo "Error: PKCS#11 module not found in default paths."
+    echo "Please install SoftHSM2 or specify the module path."
+    exit 1
   fi
   echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
 
@@ -117,40 +128,67 @@ function jcrypto_pkcs11_softhsm2_setup {
   }
 }
 
-jcrypto_pkcs11_proxy_socket="tcp://127.0.0.1:2346"
+function jcrypto_pkcs11_proxy_conf_setup {
+  if [ -n "$JCRYPTO_PKCS11_PROXY_CONF" ]; then
+    jcrypto_pkcs11_proxy_conf_in="$jcrypto_conf_dir/pkcs11-proxy-$JCRYPTO_PKCS11_PROXY_CONF.conf.in"
+    if [ -f "$jcrypto_pkcs11_proxy_conf_in" ]; then
+      jcrypto_pkcs11_proxy_conf="$jcrypto_tmp_dir/pkcs11-proxy-$JCRYPTO_PKCS11_PROXY_CONF.conf"
+      cp "$jcrypto_pkcs11_proxy_conf_in" "$jcrypto_pkcs11_proxy_conf"
+      export PKCS11_PROXY_CONF_FILE="$jcrypto_pkcs11_proxy_conf"
+      echo "Using PKCS11_PROXY_CONF_FILE=$jcrypto_pkcs11_proxy_conf"
+    else
+      echo "Error: PKCS#11 proxy conf $jcrypto_pkcs11_proxy_conf_in not found."
+      exit 1
+    fi
+  fi
+}
 
 function jcrypto_pkcs11_proxy_client_setup {
   # Find and check PKCS#11 name and library
-    jcrypto_pkcs11_name=PKCS11Proxy
-    echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
-    jcrypto_pkcs11_proxy_default_paths=(
-        "/usr/local/lib/libpkcs11-proxy.so"
-        "/lib/libpkcs11-proxy.so"
-        "/usr/lib/libpkcs11-proxy.so"
-    )
-    jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_proxy_default_paths)
-    if [ $? -ne 0 ]; then
-        echo "Error: PKCS#11 module not found in default paths."
-        echo "Please install PKCS11-PROXY or specify the module path."
-        exit 1
-    fi
-    echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
+  jcrypto_pkcs11_name=PKCS11Proxy
+  echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
+  jcrypto_pkcs11_proxy_default_paths=(
+    "/usr/local/lib/libpkcs11-proxy.so"
+    "/lib/libpkcs11-proxy.so"
+    "/usr/lib/libpkcs11-proxy.so"
+  )
+  jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_proxy_default_paths)
+  if [ $? -ne 0 ]; then
+    echo "Error: PKCS#11 module not found in default paths."
+    echo "Please install PKCS11-PROXY or specify the module path."
+    exit 1
+  fi
+  echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
 
-    export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
+  export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
+  if [[ $jcrypto_pkcs11_proxy_protocol == "tls" ]]; then
+    export PKCS11_PROXY_TLS_PSK_FILE="$jcrypto_pkcs11_proxy_psk_file"
+    echo "Using PKCS11_PROXY_TLS_PSK_FILE=$jcrypto_pkcs11_proxy_psk_file"
+  fi
+
+  jcrypto_pkcs11_proxy_conf_setup
 }
 
 function jcrypto_pkcs11_proxy_daemon_setup {
   jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/pkey-pkcs11-proxy-daemon"
   jcrypto_pkcs11_softhsm2_setup "$@"
+  jcrypto_pkcs11_proxy_conf_setup
+  if [[ $jcrypto_pkcs11_proxy_protocol == "tls" ]]; then
+    if [ ! -f "$jcrypto_pkcs11_proxy_psk_file" ]; then
+      echo "client:$(head -c 32 /dev/urandom | xxd -p -c 64)" > "$jcrypto_pkcs11_proxy_psk_file"
+    fi
+    export PKCS11_PROXY_TLS_PSK_FILE="$jcrypto_pkcs11_proxy_psk_file"
+    echo "Using PKCS11_PROXY_TLS_PSK_FILE=$jcrypto_pkcs11_proxy_psk_file"
+  fi
   export PKCS11_DAEMON_SOCKET=$jcrypto_pkcs11_proxy_socket
   echo "Using PKCS11_DAEMON_SOCKET=$jcrypto_pkcs11_proxy_socket"
 }
 
 function jcrypto_pkcs11_setup {
-    if [ -z "$1" ]; then
-      echo "Error: PKCS#11 test name not set."
-      exit 1
-    fi
+  if [ -z "$1" ]; then
+    echo "Error: PKCS#11 test name not set."
+    exit 1
+  fi
   jcrypto_pkcs11_test_name=$1
   jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$jcrypto_pkcs11_test_name"
   if [ -n "$JCRYPTO_PKCS11_PROXY" ]; then
