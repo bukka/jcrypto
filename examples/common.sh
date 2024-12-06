@@ -19,6 +19,13 @@ fi
 # this assumes that `mvn clean compile assembly:single` has been run first
 jcrypto_cmd="java -cp $jcrypto_root/target/jcrypto-1.0-SNAPSHOT-jar-with-dependencies.jar eu.bukka.jcrypto.Main"
 
+jcrypto_pkcs11_proxy_protocol=tcp
+if [[ "$JCRYPTO_PKCS11_PROXY" == "tls" ]]; then
+  jcrypto_pkcs11_proxy_protocol="tls"
+  jcrypto_pkcs11_proxy_psk_file="$jcrypto_tmp_dir/pkcs11-proxy-psk.txt"
+fi
+jcrypto_pkcs11_proxy_socket="$jcrypto_pkcs11_proxy_protocol://127.0.0.1:2346"
+
 function jcrypto {
   echo jcrypto $@
   $jcrypto_cmd $@
@@ -121,8 +128,6 @@ function jcrypto_pkcs11_softhsm2_setup {
   }
 }
 
-jcrypto_pkcs11_proxy_socket="tcp://127.0.0.1:2346"
-
 function jcrypto_pkcs11_proxy_client_setup {
   # Find and check PKCS#11 name and library
     jcrypto_pkcs11_name=PKCS11Proxy
@@ -141,11 +146,22 @@ function jcrypto_pkcs11_proxy_client_setup {
     echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
 
     export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
+    if [[ $jcrypto_pkcs11_proxy_protocol == "tls" ]]; then
+      export PKCS11_PROXY_TLS_PSK_FILE="$jcrypto_pkcs11_proxy_psk_file"
+      echo "Using PKCS11_PROXY_TLS_PSK_FILE=$jcrypto_pkcs11_proxy_psk_file"
+    fi
 }
 
 function jcrypto_pkcs11_proxy_daemon_setup {
   jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/pkey-pkcs11-proxy-daemon"
   jcrypto_pkcs11_softhsm2_setup "$@"
+  if [[ $jcrypto_pkcs11_proxy_protocol == "tls" ]]; then
+    if [ ! -f "$jcrypto_pkcs11_proxy_psk_file" ]; then
+      echo "client:$(head -c 32 /dev/urandom | xxd -p -c 64)" > "$jcrypto_pkcs11_proxy_psk_file"
+    fi
+    export PKCS11_PROXY_TLS_PSK_FILE="$jcrypto_pkcs11_proxy_psk_file"
+    echo "Using PKCS11_PROXY_TLS_PSK_FILE=$jcrypto_pkcs11_proxy_psk_file"
+  fi
   export PKCS11_DAEMON_SOCKET=$jcrypto_pkcs11_proxy_socket
   echo "Using PKCS11_DAEMON_SOCKET=$jcrypto_pkcs11_proxy_socket"
 }
