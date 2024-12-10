@@ -116,10 +116,14 @@ function jcrypto_pkcs11_softhsm2_setup {
   fi
   echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
 
-  if [ -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
-    rm -rf "$jcrypto_pkcs11_softhsm2_tokens"
+  if [ -z "$jcrypto_pkcs11_softhsm2_tokens_keep" ]; then
+    if [ -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
+      rm -rf "$jcrypto_pkcs11_softhsm2_tokens"
+    fi
+    mkdir "$jcrypto_pkcs11_softhsm2_tokens"
+  elif [ ! -d "$jcrypto_pkcs11_softhsm2_tokens" ]
+    mkdir "$jcrypto_pkcs11_softhsm2_tokens"
   fi
-  mkdir "$jcrypto_pkcs11_softhsm2_tokens"
 
   # Initialize the token
   softhsm2-util --init-token --slot 0 --label "jCryptoTestToken" --so-pin 1234 --pin 1234 || {
@@ -209,6 +213,44 @@ function jcrypto_pkcs11_generate_key {
       echo "Error: Failed to generate key pair."
       exit 1
   }
+}
+
+function jcrypto_openssl_pkcs11_engine_cnf_setup {
+  jcrypto_openssl_cnf="$jcrypto_tmp_dir/openssl.cnf"
+  sed "s|__MODULE_PATH__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/openssl.cnf.in" > "$jcrypto_openssl_cnf"
+  # TODO: change
+  sed -i "s|__ENGINE_PAHT__|/var/lib/osslpkcs11.so|g" "$jcrypto_openssl_cnf"
+}
+
+function jcrypto_nginx_conf_setup {
+  jcrypto_nginx_ssl_cert="$1"
+  jcrypto_nginx_ssl_key="$2"
+
+  jcrypto_nginx_conf="$jcrypto_tmp_dir/nginx.conf"
+  sed "s|__SSL_CERT__|$jcrypto_nginx_ssl_cert|g" "$jcrypto_conf_dir/nginx.conf.in" > "$jcrypto_nginx_conf"
+  sed -i "s|__SSL_CERT__|$jcrypto_nginx_ssl_key|g" "$jcrypto_nginx_conf"
+  sed -i "s|__LISTEN_PORT__|$jcrypto_nginx_listen_port|g" "$jcrypto_nginx_conf"
+  sed -i "s|__PROXY_PORT__|$jcrypto_nginx_proxy_port|g" "$jcrypto_nginx_conf"
+}
+
+function jcrypto_nginx_setup {
+  jcrypto_nginx_type=$1
+  jcrypto_nginx_listen_port=$2
+  jcrypto_nginx_proxy_port=$3
+
+  if [[ $jcrypto_nginx_type == "pkcs11-engine" ]]; then
+    jcrypto_pkcs11_softhsm2_tokens_keep=1
+    jcrypto_pkcs11_setup nginx
+    jcrypto_openssl_pkcs11_engine_cnf_setup
+    # TODO: set proper labels
+    jcrypto_nginx_ssl_cert="engine:pkcs11:pkcs11:token=nginx-token;object=nginx-cert;type=cert"
+    jcrypto_nginx_ssl_key="engine:pkcs11:pkcs11:token=nginx-token;object=nginx-key;type=private"
+  else
+    # TODO: create and set cert and key (from existing ones)
+    jcrypto_nginx_ssl_cert=""
+    jcrypto_nginx_ssl_key=""
+    jcrypto_nginx_conf_setup
+  fi
 }
 
 function jcrypto_clean_tmp {

@@ -1,0 +1,29 @@
+pid __ROOT_DIR__/nginx.pid;
+daemon off;
+
+error_log /dev/stderr;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    error_log /dev/stderr;
+    access_log /dev/stdout;
+
+    server {
+        listen       __LISTEN_PORT__ ssl default_server;
+        server_name  _;
+
+        ssl_certificate      __SSL_CERT__;
+        ssl_certificate_key  __SSL_KEY__;
+
+        ssl_protocols TLSv1.2;
+        ssl_ciphers 'ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA';
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            proxy_pass http://127.0.0.1:__PROXY_PORT__;
+        }
+    }
+}
