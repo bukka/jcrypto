@@ -40,6 +40,12 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
     @CommandLine.Option(names = {"--public-key-alias"}, description = "Public key alias")
     private String publicKeyAlias;
 
+    @CommandLine.Option(names = {"--certificate-file"}, description = "Certificate file")
+    private File certificateFile;
+
+    @CommandLine.Option(names = {"--certificate-alias"}, description = "Certificate alias")
+    private String certificatAlias;
+
     @CommandLine.Option(names = {"--signature-file"}, description = "Public key file")
     private File signatureFile;
 
@@ -91,6 +97,21 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
     @Override
     public byte[] getPublicKeyFileData() throws IOException {
         return getFileData(publicKeyFile);
+    }
+
+    @Override
+    public String getCertificateAlias() {
+        return certificatAlias;
+    }
+
+    @Override
+    public File getCertificateFile() {
+        return certificateFile;
+    }
+
+    @Override
+    public byte[] getCertificateFileData() throws IOException {
+        return getFileData(certificateFile);
     }
 
     @Override

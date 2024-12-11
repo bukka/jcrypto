@@ -20,6 +20,12 @@ public interface PKeyOptions extends CommonOptions {
 
     File getSignatureFile();
 
+    String getCertificateAlias();
+
+    File getCertificateFile();
+
+    byte[] getCertificateFileData() throws IOException;
+
     byte[] getSignatureFileData() throws IOException;
 
     String getKeyStoreName();

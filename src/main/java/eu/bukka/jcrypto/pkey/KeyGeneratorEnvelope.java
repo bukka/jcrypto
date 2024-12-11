@@ -19,7 +19,9 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Objects;
 
 public class KeyGeneratorEnvelope extends PKeyEnvelope {
 
@@ -125,6 +127,7 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
 
     private byte[] saveKeyPair(KeyPair keyPair, String keyName) throws IOException, GeneralSecurityException {
         byte[] publicKeyEncodedData = null;
+        X509Certificate certificate = null;
         if (options.getPublicKeyFile() != null) {
             PublicKey publicKey = keyPair.getPublic();
             if (publicKey == null) {
@@ -133,7 +136,7 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
             publicKeyEncodedData = publicKey.getEncoded();
             File publicKeyFile = options.getPublicKeyFile();
             if (publicKeyFile != null) {
-                options.writeData(publicKeyFile, publicKeyEncodedData);
+                writeData(publicKeyFile, publicKeyEncodedData, "PUBLIC KEY");
             }
         }
         if (options.getProvider() != null && options.getProviderName().equalsIgnoreCase("SunPKCS11")) {
@@ -149,7 +152,7 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
             String keyStorePassword = options.getKeyStorePassword();
             char[] keyStorePasswordChars = keyStorePassword != null ? keyStorePassword.toCharArray() : null;
             loadKeyStore();
-            X509Certificate certificate = generateSelfSignedCertificate(keyPair);
+            certificate = generateSelfSignedCertificate(keyPair);
             keyStore.setKeyEntry(alias, keyPair.getPrivate(), keyStorePasswordChars, new X509Certificate[]{certificate});
         } else {
             // Save both private key only for non-PKCS#11 providers
@@ -159,10 +162,30 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
                 if (privateKey == null) {
                     throw new IOException("Private key is null, cannot save to file");
                 }
-                options.writeData(keyFile, privateKey.getEncoded());
+                writeData(keyFile, privateKey.getEncoded(), "PRIVATE KEY");
             }
         }
+        File certFile = options.getCertificateFile();
+        if (certFile != null) {
+            if (certificate == null) {
+                certificate = generateSelfSignedCertificate(keyPair);
+            }
+            writeData(certFile, certificate.getEncoded(), "CERTIFICATE");
+        }
+
         return publicKeyEncodedData;
+    }
+
+    private void writeData(File file, byte[] data, String type) throws IOException {
+        if (Objects.equals(options.getForm(), "PEM")) {
+            String base64 = Base64.getEncoder().encodeToString(data);
+            String pem = "-----BEGIN " + type + "-----\n" +
+                    base64.replaceAll("(.{64})", "$1\n") +
+                    "\n-----END " + type + "-----\n";
+            options.writeData(file, pem.getBytes());
+        } else {
+            options.writeData(file, data);
+        }
     }
 
     private File getPrivateFile(String keyName) {

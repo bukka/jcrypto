@@ -121,7 +121,7 @@ function jcrypto_pkcs11_softhsm2_setup {
       rm -rf "$jcrypto_pkcs11_softhsm2_tokens"
     fi
     mkdir "$jcrypto_pkcs11_softhsm2_tokens"
-  elif [ ! -d "$jcrypto_pkcs11_softhsm2_tokens" ]
+  elif [ ! -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
     mkdir "$jcrypto_pkcs11_softhsm2_tokens"
   fi
 
