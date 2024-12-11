@@ -8,8 +8,11 @@ events {
 }
 
 http {
-    error_log /dev/stderr;
+    error_log /dev/stderr debug;
     access_log /dev/stdout;
+
+    client_body_temp_path __CLIENT_BODY_TEMP_PATH__;
+    proxy_temp_path __PROXY_TEMP_PATH__;
 
     server {
         listen       __LISTEN_PORT__ ssl default_server;

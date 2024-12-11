@@ -1,3 +1,5 @@
+openssl_conf = openssl_init
+
 [openssl_init]
 engines = engine_section
 
@@ -9,3 +11,4 @@ engine_id = pkcs11
 dynamic_path = __ENGINE_PATH__
 MODULE_PATH = __MODULE_PATH__
 init = 1
+PIN = 1234

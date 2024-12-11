@@ -91,45 +91,62 @@ function jcrypto_pkcs11_make_java_config {
   sed -i "s|__PKCS11_NAME__|$jcrypto_pkcs11_name|g" "$jcrypto_pkcs11_java_config"
 }
 
-function jcrypto_pkcs11_softhsm2_setup {
-  jcrypto_pkcs11_softhsm2_tokens="$jcrypto_pkcs11_prefix-tokens"
-  jcrypto_pkcs11_softhsm2_config="$jcrypto_pkcs11_prefix-softhsm2.conf"
-
-  # Create and set SoftHSM2 config
-  sed "s|__TOKENS_DIR__|$jcrypto_pkcs11_softhsm2_tokens|g" "$jcrypto_conf_dir/softhsm2.conf.in" > "$jcrypto_pkcs11_softhsm2_config"
-  export SOFTHSM2_CONF="$jcrypto_pkcs11_softhsm2_config"
-  echo "Using SOFTHSM2_CONF=$jcrypto_pkcs11_softhsm2_config"
-
-  # Find and check PKCS#11 name and library
-  jcrypto_pkcs11_name=SoftHSM2
-  echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
-  jcrypto_pkcs11_softhsm2_default_paths=(
-    "/usr/local/lib/softhsm/libsofthsm2.so"
-    "/usr/lib/softhsm/libsofthsm2.so"
-  )
-
-  jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_softhsm2_default_paths)
-  if [ $? -ne 0 ]; then
-    echo "Error: PKCS#11 module not found in default paths."
-    echo "Please install SoftHSM2 or specify the module path."
-    exit 1
-  fi
-  echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
-
-  if [ -z "$jcrypto_pkcs11_softhsm2_tokens_keep" ]; then
-    if [ -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
-      rm -rf "$jcrypto_pkcs11_softhsm2_tokens"
-    fi
-    mkdir "$jcrypto_pkcs11_softhsm2_tokens"
-  elif [ ! -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
-    mkdir "$jcrypto_pkcs11_softhsm2_tokens"
-  fi
-
+function jcrypto_pkcs11_softhsm2_init_token {
   # Initialize the token
   softhsm2-util --init-token --slot 0 --label "jCryptoTestToken" --so-pin 1234 --pin 1234 || {
-      echo "Error: Failed to initialize token."
-      exit 1
+    echo "Error: Failed to initialize token."
+    exit 1
   }
+}
+
+function jcrypto_pkcs11_softhsm2_setup {
+  if [ -z "$jcrypto_pkcs11_prefix" ]; then
+    if [ -z "$1" ]; then
+      echo "Error: No prefix for SoftHSM2 setup."
+      exit 1
+    fi
+    jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$1"
+  fi
+
+  if [[ "$jcrypto_pkcs11_softhsm2_tokens" != "$jcrypto_pkcs11_prefix-tokens" ]]; then
+    jcrypto_pkcs11_softhsm2_tokens="$jcrypto_pkcs11_prefix-tokens"
+    jcrypto_pkcs11_softhsm2_config="$jcrypto_pkcs11_prefix-softhsm2.conf"
+
+    # Create and set SoftHSM2 config
+    sed "s|__TOKENS_DIR__|$jcrypto_pkcs11_softhsm2_tokens|g" "$jcrypto_conf_dir/softhsm2.conf.in" > "$jcrypto_pkcs11_softhsm2_config"
+    export SOFTHSM2_CONF="$jcrypto_pkcs11_softhsm2_config"
+    echo "Using SOFTHSM2_CONF=$jcrypto_pkcs11_softhsm2_config"
+
+    # Find and check PKCS#11 name and library
+    jcrypto_pkcs11_name=SoftHSM2
+    echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
+    jcrypto_pkcs11_softhsm2_default_paths=(
+      "/usr/local/lib/softhsm/libsofthsm2.so"
+      "/usr/lib/softhsm/libsofthsm2.so"
+    )
+
+    jcrypto_pkcs11_softhsm2_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_softhsm2_default_paths)
+    if [ $? -ne 0 ]; then
+      echo "Error: PKCS#11 module not found in default paths."
+      echo "Please install SoftHSM2 or specify the module path."
+      exit 1
+    fi
+    jcrypto_pkcs11_library="$jcrypto_pkcs11_softhsm2_library"
+    echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
+
+    if [ -z "$jcrypto_pkcs11_tokens_keep" ]; then
+      # Reset tokens
+      if [ -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
+        rm -rf "$jcrypto_pkcs11_softhsm2_tokens"
+      fi
+      mkdir "$jcrypto_pkcs11_softhsm2_tokens"
+      jcrypto_pkcs11_softhsm2_init_token
+    elif [ ! -d "$jcrypto_pkcs11_softhsm2_tokens" ]; then
+      # Create tokens dir only if it does not exist
+      mkdir "$jcrypto_pkcs11_softhsm2_tokens"
+      jcrypto_pkcs11_softhsm2_init_token
+    fi
+  fi
 }
 
 function jcrypto_pkcs11_proxy_conf_setup {
@@ -216,38 +233,66 @@ function jcrypto_pkcs11_generate_key {
 }
 
 function jcrypto_openssl_pkcs11_engine_cnf_setup {
-  jcrypto_openssl_cnf="$jcrypto_tmp_dir/openssl.cnf"
-  sed "s|__MODULE_PATH__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/openssl.cnf.in" > "$jcrypto_openssl_cnf"
-  # TODO: change
-  sed -i "s|__ENGINE_PAHT__|/var/lib/osslpkcs11.so|g" "$jcrypto_openssl_cnf"
+  jcrypto_openssl_cnf="$jcrypto_tmp_dir/openssl-$jcrypto_nginx_type.cnf"
+
+  jcrypto_pkcs11_proxy_default_paths=(
+    "/usr/local/ssl33/lib64/engines-3/pkcs11.so" # not exactly generic but my personal preference
+    "/usr/lib/x86_64-linux-gnu/engines-3/pkcs11.so"
+    "/usr/lib/engines-3/pkcs11.so"
+    "/usr/lib/ssl/engines/libpkcs11.so"
+    "/usr/lib/engines/engine_pkcs11.so"
+  )
+  jcrypto_libp11_path=$(jcrypto_find_first_existing_path jcrypto_pkcs11_proxy_default_paths)
+  if [ $? -ne 0 ]; then
+    echo "Error: libp11 engine not found in default paths."
+    echo "Please install libp11 or specify the module path."
+    exit 1
+  fi
+  sed "s|__MODULE_PATH__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/openssl-pkcs11-engine.cnf.in" > "$jcrypto_openssl_cnf"
+  sed -i "s|__ENGINE_PATH__|$jcrypto_libp11_path|g" "$jcrypto_openssl_cnf"
+  export OPENSSL_CONF="$jcrypto_openssl_cnf"
+  echo "Using OPENSSL_CONF=$jcrypto_openssl_cnf"
 }
 
 function jcrypto_nginx_conf_setup {
   jcrypto_nginx_conf="$jcrypto_tmp_dir/nginx-$jcrypto_nginx_type.conf"
+  jcrypto_nginx_client_body_temp_path="$jcrypto_tmp_dir/nginx/client_body_temp"
+  jcrypto_nginx_proxy_temp_path="$jcrypto_tmp_dir/nginx/proxy_temp"
+
+  if [ ! -d "$jcrypto_nginx_client_body_temp_path" ]; then
+    mkdir -p "$jcrypto_nginx_client_body_temp_path"
+  fi
+  if [ ! -d "$jcrypto_nginx_proxy_temp_path" ]; then
+    mkdir -p "$jcrypto_nginx_proxy_temp_path"
+  fi
+
   sed "s|__SSL_CERT__|$jcrypto_nginx_ssl_cert|g" "$jcrypto_conf_dir/nginx.conf.in" > "$jcrypto_nginx_conf"
   sed -i "s|__SSL_KEY__|$jcrypto_nginx_ssl_key|g" "$jcrypto_nginx_conf"
   sed -i "s|__LISTEN_PORT__|$jcrypto_nginx_listen_port|g" "$jcrypto_nginx_conf"
   sed -i "s|__PROXY_PORT__|$jcrypto_nginx_proxy_port|g" "$jcrypto_nginx_conf"
   sed -i "s|__PID_FILE__|$jcrypto_tmp_dir/nginx-$jcrypto_nginx_type.pid|g" "$jcrypto_nginx_conf"
+  sed -i "s|__CLIENT_BODY_TEMP_PATH__|$jcrypto_nginx_client_body_temp_path|g" "$jcrypto_nginx_conf"
+  sed -i "s|__PROXY_TEMP_PATH__|$jcrypto_nginx_proxy_temp_path|g" "$jcrypto_nginx_conf"
 }
 
 function jcrypto_nginx_setup {
   jcrypto_nginx_type=$1
-  jcrypto_nginx_listen_port=$2
-  jcrypto_nginx_proxy_port=$3
+  jcrypto_nginx_test_name=$2
+  jcrypto_nginx_cert_path=$3
+  jcrypto_nginx_priv_key_alias=$4
+  jcrypto_nginx_listen_port=$5
+  jcrypto_nginx_proxy_port=$6
 
   if [[ $jcrypto_nginx_type == "pkcs11-engine" ]]; then
-    jcrypto_pkcs11_softhsm2_tokens_keep=1
-    jcrypto_pkcs11_setup nginx
+    jcrypto_pkcs11_setup $jcrypto_nginx_test_name
     jcrypto_openssl_pkcs11_engine_cnf_setup
-    # TODO: set proper labels
-    jcrypto_nginx_ssl_cert="engine:pkcs11:pkcs11:token=nginx-token;object=nginx-cert;type=cert"
-    jcrypto_nginx_ssl_key="engine:pkcs11:pkcs11:token=nginx-token;object=nginx-key;type=private"
+    jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
+    jcrypto_nginx_ssl_key='"engine:pkcs11:pkcs11:token=jCryptoTestToken;object='$jcrypto_nginx_priv_key_alias'"'
   else
     jcrypto_nginx_ssl_cert="$jcrypto_data_dir/nginx_cert_ec_secp256r1.pem"
     jcrypto_nginx_ssl_key="$jcrypto_data_dir/nginx_private_key_ec_secp256r1.pem"
-    jcrypto_nginx_conf_setup
   fi
+  jcrypto_nginx_conf_setup
 }
 
 function jcrypto_clean_tmp {

@@ -14,10 +14,10 @@ jcrypto_server_port=8089
 jcrypto_server_url="http://localhost:$jcrypto_server_port"
 
 jcrypto_info
-jcrypto_pkcs11_setup pkey-sign-verify
+jcrypto_pkcs11_setup pkey-server
 
 echo "JCRYPTO GENERATE KEY"
-jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-alias JavaTestSignVerifyECKey \
+jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-alias JavaTestServerECKey \
   --key-store-password 1234 --key-store-name PKCS11 --algorithm EC --parameters $jcrypto_curve_name \
   --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_java_config"
 
@@ -27,7 +27,7 @@ jcrypto_pkey_data=$(cat "$jcrypto_this_dir/in-pkey-data.txt")
 
 echo "JCRYPTO SERVER START"
 jcrypto pkey server start --pid-file "$jcrypto_server_pid_file" --port $jcrypto_server_port \
-  -a SHA256withECDSA --private-key-alias JavaTestSignVerifyECKey --public-key-file "$jcrypto_out_pub_key_file" \
+  -a SHA256withECDSA --private-key-alias JavaTestServerECKey --public-key-file "$jcrypto_out_pub_key_file" \
   --key-store-password 1234 --key-store-name PKCS11 \
   --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_java_config"
 
