@@ -12,7 +12,7 @@ jcrypto_this_dir="$jcrypto_root/examples"
 
 source "$jcrypto_this_dir/common.sh"
 
-if [ -n "$1" ];
+if [ -n "$1" ]; then
   jcrypto_nginx_type="$1";
 else
   jcrypto_nginx_type="basic";

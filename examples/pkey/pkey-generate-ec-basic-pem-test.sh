@@ -13,8 +13,7 @@ jcrypto_out_priv_key_file="$jcrypto_tmp_dir/out-pkey-ec-${jcrypto_curve_name}-pr
 
 echo "JCRYPTO GENERATE KEY"
 jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-file "$jcrypto_out_priv_key_file" \
-  --certificate-file "$jcrypto_out_cert_file" --form PEM --algorithm EC --parameters $jcrypto_curve_name \
-  --key-store-password 1234
+  --certificate-file "$jcrypto_out_cert_file" --form PEM --algorithm EC --parameters $jcrypto_curve_name
 
 jcrypto_cat "$jcrypto_out_cert_file"
 jcrypto_cat "$jcrypto_out_pub_key_file"

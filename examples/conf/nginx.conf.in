@@ -1,4 +1,4 @@
-pid __ROOT_DIR__/nginx.pid;
+pid __PID_FILE__;
 daemon off;
 
 error_log /dev/stderr;

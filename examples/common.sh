@@ -223,14 +223,12 @@ function jcrypto_openssl_pkcs11_engine_cnf_setup {
 }
 
 function jcrypto_nginx_conf_setup {
-  jcrypto_nginx_ssl_cert="$1"
-  jcrypto_nginx_ssl_key="$2"
-
-  jcrypto_nginx_conf="$jcrypto_tmp_dir/nginx.conf"
+  jcrypto_nginx_conf="$jcrypto_tmp_dir/nginx-$jcrypto_nginx_type.conf"
   sed "s|__SSL_CERT__|$jcrypto_nginx_ssl_cert|g" "$jcrypto_conf_dir/nginx.conf.in" > "$jcrypto_nginx_conf"
-  sed -i "s|__SSL_CERT__|$jcrypto_nginx_ssl_key|g" "$jcrypto_nginx_conf"
+  sed -i "s|__SSL_KEY__|$jcrypto_nginx_ssl_key|g" "$jcrypto_nginx_conf"
   sed -i "s|__LISTEN_PORT__|$jcrypto_nginx_listen_port|g" "$jcrypto_nginx_conf"
   sed -i "s|__PROXY_PORT__|$jcrypto_nginx_proxy_port|g" "$jcrypto_nginx_conf"
+  sed -i "s|__PID_FILE__|$jcrypto_tmp_dir/nginx-$jcrypto_nginx_type.pid|g" "$jcrypto_nginx_conf"
 }
 
 function jcrypto_nginx_setup {
@@ -246,9 +244,8 @@ function jcrypto_nginx_setup {
     jcrypto_nginx_ssl_cert="engine:pkcs11:pkcs11:token=nginx-token;object=nginx-cert;type=cert"
     jcrypto_nginx_ssl_key="engine:pkcs11:pkcs11:token=nginx-token;object=nginx-key;type=private"
   else
-    # TODO: create and set cert and key (from existing ones)
-    jcrypto_nginx_ssl_cert=""
-    jcrypto_nginx_ssl_key=""
+    jcrypto_nginx_ssl_cert="$jcrypto_data_dir/nginx_cert_ec_secp256r1.pem"
+    jcrypto_nginx_ssl_key="$jcrypto_data_dir/nginx_private_key_ec_secp256r1.pem"
     jcrypto_nginx_conf_setup
   fi
 }
