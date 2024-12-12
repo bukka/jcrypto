@@ -182,6 +182,7 @@ function jcrypto_pkcs11_proxy_client_setup {
   echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
 
   export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
+  echo "Using PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket"
   if [[ $jcrypto_pkcs11_proxy_protocol == "tls" ]]; then
     export PKCS11_PROXY_TLS_PSK_FILE="$jcrypto_pkcs11_proxy_psk_file"
     echo "Using PKCS11_PROXY_TLS_PSK_FILE=$jcrypto_pkcs11_proxy_psk_file"
@@ -191,7 +192,7 @@ function jcrypto_pkcs11_proxy_client_setup {
 }
 
 function jcrypto_pkcs11_proxy_daemon_setup {
-  jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/pkey-pkcs11-proxy-daemon"
+  jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$1"
   jcrypto_pkcs11_softhsm2_setup "$@"
   jcrypto_pkcs11_proxy_conf_setup
   if [[ $jcrypto_pkcs11_proxy_protocol == "tls" ]]; then
@@ -287,7 +288,7 @@ function jcrypto_nginx_setup {
     jcrypto_pkcs11_setup $jcrypto_nginx_test_name
     jcrypto_openssl_pkcs11_engine_cnf_setup
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
-    jcrypto_nginx_ssl_key='"engine:pkcs11:pkcs11:token=jCryptoTestToken;object='$jcrypto_nginx_priv_key_alias'"'
+    jcrypto_nginx_ssl_key='"engine:pkcs11:pkcs11:token=jCryptoTestToken;object='$jcrypto_nginx_priv_key_alias'?pin-value=1234"'
   else
     jcrypto_nginx_ssl_cert="$jcrypto_data_dir/nginx_cert_ec_secp256r1.pem"
     jcrypto_nginx_ssl_key="$jcrypto_data_dir/nginx_private_key_ec_secp256r1.pem"

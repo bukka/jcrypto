@@ -16,11 +16,14 @@ jcrypto_server_url="http://localhost:$jcrypto_server_port"
 jcrypto_info
 jcrypto_pkcs11_setup pkey-server
 
-echo "JCRYPTO GENERATE KEY"
-jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-alias JavaTestServerECKey \
-  --key-store-password 1234 --key-store-name PKCS11 --algorithm EC --parameters $jcrypto_curve_name \
-  --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_java_config"
-
+if [ -n "$PKCS11_KEYS_REUSE" ]; then
+  jcrypto_pkcs11_tokens_keep=1
+else
+  echo "JCRYPTO GENERATE KEY"
+  jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-alias JavaTestServerECKey \
+    --key-store-password 1234 --key-store-name PKCS11 --algorithm EC --parameters $jcrypto_curve_name \
+    --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_java_config"
+fi
 jcrypto_cat_b64 "$jcrypto_out_pub_key_file"
 
 jcrypto_pkey_data=$(cat "$jcrypto_this_dir/in-pkey-data.txt")

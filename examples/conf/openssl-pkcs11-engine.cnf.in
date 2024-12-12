@@ -10,5 +10,6 @@ pkcs11 = pkcs11_section
 engine_id = pkcs11
 dynamic_path = __ENGINE_PATH__
 MODULE_PATH = __MODULE_PATH__
-init = 1
+VERBOSE = EMPTY
 PIN = 1234
+init = 1
