@@ -32,16 +32,20 @@ public class PKeyEnvelope {
         return keyStore;
     }
 
-    private KeyFactory getKeyFactory(String algorithm) throws NoSuchAlgorithmException {
+    protected String getBaseAlgorithm(String algorithm) {
         if (algorithm.toUpperCase().contains("EC")) {
-            return KeyFactory.getInstance("EC");
+            return "EC";
         } else if (algorithm.toUpperCase().contains("RSA")) {
-            return KeyFactory.getInstance("RSA");
+            return "RSA";
         } else if (algorithm.toUpperCase().contains("DSA")) {
-            return KeyFactory.getInstance("DSA");
+            return "DSA";
         } else {
-            return KeyFactory.getInstance(algorithm);
+            return algorithm;
         }
+    }
+
+    private KeyFactory getKeyFactory(String algorithm) throws NoSuchAlgorithmException {
+        return KeyFactory.getInstance(getBaseAlgorithm(algorithm));
     }
 
     protected PublicKey getPublicKey() throws GeneralSecurityException, IOException {
@@ -56,11 +60,14 @@ public class PKeyEnvelope {
         }
     }
 
-    private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
-        byte[] publicKeyBytes = options.getPublicKeyFileData();
+    protected PublicKey getPublicKeyFromBytes(byte[] publicKeyBytes) throws GeneralSecurityException {
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
         KeyFactory keyFactory = getKeyFactory(options.getAlgorithm());
         return keyFactory.generatePublic(keySpec);
+    }
+
+    private PublicKey getPublicKeyFromFile() throws IOException, GeneralSecurityException {
+        return getPublicKeyFromBytes(options.getPublicKeyFileData());
     }
 
     private PublicKey getPublicKeyFromKeyStore(String publicKeyAlias) throws GeneralSecurityException, IOException {

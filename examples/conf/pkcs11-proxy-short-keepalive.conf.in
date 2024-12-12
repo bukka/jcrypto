@@ -1,0 +1,4 @@
+so_keepalive = true
+tcp_keepidle = 120
+tcp_keepintvl = 30
+tcp_keepcnt = 3

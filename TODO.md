@@ -13,3 +13,6 @@
 ## Mail
 - Add SMIMEEnvelope tests
 
+## PKey
+- generate cert signer should not be just for ECDH
+  - make it generic

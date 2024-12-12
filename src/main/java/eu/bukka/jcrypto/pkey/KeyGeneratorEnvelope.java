@@ -19,7 +19,9 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Objects;
 
 public class KeyGeneratorEnvelope extends PKeyEnvelope {
 
@@ -27,37 +29,29 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
         super(options);
     }
 
-    public void generate() throws GeneralSecurityException, IOException, OperatorException {
+    public byte[] generate(String keyName) throws GeneralSecurityException, IOException, OperatorException {
         KeyPair keyPair = generateKeyPair();
         if (keyPair == null) {
             throw new GeneralSecurityException("KeyPair generation failed");
         }
-        saveKeyPair(keyPair);
+        return saveKeyPair(keyPair, keyName);
     }
 
+    public void generate() throws GeneralSecurityException, IOException, OperatorException {
+        generate(null);
+    }
 
     private KeyPair generateKeyPair() throws GeneralSecurityException, IOException {
-        String algorithm = options.getAlgorithm();
+        String algorithm = getBaseAlgorithm(options.getAlgorithm());
         String parameters = options.getParameters();
         Provider provider = options.getProvider();
 
         KeyPairGenerator keyPairGenerator;
-
-        try {
-            if (provider != null) {
-                loadKeyStore();
-                keyPairGenerator = KeyPairGenerator.getInstance(algorithm, provider);
-            } else {
-                keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
-            }
-        } catch (NoSuchAlgorithmException e) {
-            if (provider != null) {
-                System.out.println("Provider: " + provider.getName());
-                provider.getServices().forEach(service -> System.out.println(service.getType() + ": " + service.getAlgorithm()));
-            }
-            throw e;
-        } catch (GeneralSecurityException|IOException e) {
-            throw e;
+        if (provider != null) {
+            loadKeyStore();
+            keyPairGenerator = KeyPairGenerator.getInstance(algorithm, provider);
+        } else {
+            keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
         }
 
         if ("EC".equalsIgnoreCase(algorithm) && parameters != null) {
@@ -131,32 +125,85 @@ public class KeyGeneratorEnvelope extends PKeyEnvelope {
                 .getCertificate(certHolder);
     }
 
-    private void saveKeyPair(KeyPair keyPair) throws IOException, GeneralSecurityException {
+    private byte[] saveKeyPair(KeyPair keyPair, String keyName) throws IOException, GeneralSecurityException {
+        byte[] publicKeyEncodedData = null;
+        X509Certificate certificate = null;
         if (options.getPublicKeyFile() != null) {
-            saveKeyToFile(keyPair.getPublic(), options.getPublicKeyFile());
+            PublicKey publicKey = keyPair.getPublic();
+            if (publicKey == null) {
+                throw new IOException("Public key is null, cannot save to file");
+            }
+            publicKeyEncodedData = publicKey.getEncoded();
+            File publicKeyFile = options.getPublicKeyFile();
+            if (publicKeyFile != null) {
+                writeData(publicKeyFile, publicKeyEncodedData, "PUBLIC KEY");
+            }
         }
         if (options.getProvider() != null && options.getProviderName().equalsIgnoreCase("SunPKCS11")) {
             String alias = options.getPrivateKeyAlias();
             if (alias == null) {
-                throw new SecurityException("Alias is required for PKCS#11 key store");
+                if (keyName == null) {
+                    throw new SecurityException("Alias is required for PKCS#11 key store");
+                }
+                alias = keyName;
+            } else if (keyName != null) {
+                alias = alias + "-" + keyName;
             }
             String keyStorePassword = options.getKeyStorePassword();
             char[] keyStorePasswordChars = keyStorePassword != null ? keyStorePassword.toCharArray() : null;
             loadKeyStore();
-            X509Certificate certificate = generateSelfSignedCertificate(keyPair);
+            certificate = generateSelfSignedCertificate(keyPair);
             keyStore.setKeyEntry(alias, keyPair.getPrivate(), keyStorePasswordChars, new X509Certificate[]{certificate});
         } else {
             // Save both private key only for non-PKCS#11 providers
             if (options.getPrivateKeyFile() != null) {
-                saveKeyToFile(keyPair.getPrivate(), options.getPrivateKeyFile());
+                File keyFile = getPrivateFile(keyName);
+                PrivateKey privateKey = keyPair.getPrivate();
+                if (privateKey == null) {
+                    throw new IOException("Private key is null, cannot save to file");
+                }
+                writeData(keyFile, privateKey.getEncoded(), "PRIVATE KEY");
             }
+        }
+        File certFile = options.getCertificateFile();
+        if (certFile != null) {
+            if (certificate == null) {
+                certificate = generateSelfSignedCertificate(keyPair);
+            }
+            writeData(certFile, certificate.getEncoded(), "CERTIFICATE");
+        }
+
+        return publicKeyEncodedData;
+    }
+
+    private void writeData(File file, byte[] data, String type) throws IOException {
+        if (Objects.equals(options.getForm(), "PEM")) {
+            String base64 = Base64.getEncoder().encodeToString(data);
+            String pem = "-----BEGIN " + type + "-----\n" +
+                    base64.replaceAll("(.{64})", "$1\n") +
+                    "\n-----END " + type + "-----\n";
+            options.writeData(file, pem.getBytes());
+        } else {
+            options.writeData(file, data);
         }
     }
 
-    private void saveKeyToFile(Key key, File file) throws IOException {
-        if (key == null) {
-            throw new IOException("Key is null, cannot save to file");
+    private File getPrivateFile(String keyName) {
+        File basePrivateKeyFile = options.getPrivateKeyFile();
+        File keyFile;
+        if (keyName != null) {
+            // Create a new file name based on the base file path and the key name
+            String baseFileName = basePrivateKeyFile.getName();
+            String baseFilePath = basePrivateKeyFile.getParent();
+            String newFileName = baseFileName + "-" + keyName;
+            if (baseFilePath != null) {
+                keyFile = new File(baseFilePath, newFileName);
+            } else {
+                keyFile = new File(newFileName);
+            }
+        } else {
+            keyFile = basePrivateKeyFile;
         }
-        options.writeData(file, key.getEncoded());
+        return keyFile;
     }
 }
