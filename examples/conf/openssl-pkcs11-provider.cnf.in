@@ -1,0 +1,17 @@
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+pkcs11 = pkcs11_sect
+
+[default_sect]
+activate = 1
+
+[pkcs11_sect]
+module = __PROVIDER_PATH__
+pkcs11-module-path = __MODULE_PATH__
+pkcs11-module-token-pin = 1234
+activate = 1
