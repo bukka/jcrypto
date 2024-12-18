@@ -1,6 +1,9 @@
 pid __PID_FILE__;
 daemon off;
 
+env SOFTHSM2_CONF;
+env OPENSSL_CONF;
+
 error_log /dev/stderr;
 
 events {
