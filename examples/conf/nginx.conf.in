@@ -1,0 +1,36 @@
+pid __PID_FILE__;
+daemon off;
+
+env SOFTHSM2_CONF;
+env OPENSSL_CONF;
+env PKCS11_PROXY_SOCKET;
+
+error_log /dev/stderr;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    error_log /dev/stderr debug;
+    access_log /dev/stdout;
+
+    client_body_temp_path __CLIENT_BODY_TEMP_PATH__;
+    proxy_temp_path __PROXY_TEMP_PATH__;
+
+    server {
+        listen       __LISTEN_PORT__ ssl default_server;
+        server_name  _;
+
+        ssl_certificate      __SSL_CERT__;
+        ssl_certificate_key  __SSL_KEY__;
+
+        ssl_protocols TLSv1.2;
+        ssl_ciphers 'ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA';
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            proxy_pass http://127.0.0.1:__PROXY_PORT__;
+        }
+    }
+}
