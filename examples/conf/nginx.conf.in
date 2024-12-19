@@ -3,6 +3,7 @@ daemon off;
 
 env SOFTHSM2_CONF;
 env OPENSSL_CONF;
+env PKCS11_PROXY_SOCKET;
 
 error_log /dev/stderr;
 

@@ -173,12 +173,13 @@ function jcrypto_pkcs11_proxy_client_setup {
     "/lib/libpkcs11-proxy.so"
     "/usr/lib/libpkcs11-proxy.so"
   )
-  jcrypto_pkcs11_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_proxy_default_paths)
+  jcrypto_pkcs11_proxy_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_proxy_default_paths)
   if [ $? -ne 0 ]; then
     echo "Error: PKCS#11 module not found in default paths."
     echo "Please install PKCS11-PROXY or specify the module path."
     exit 1
   fi
+  jcrypto_pkcs11_library="$jcrypto_pkcs11_proxy_library"
   echo "Using PKCS11_LIBARY=$jcrypto_pkcs11_library"
 
   export PKCS11_PROXY_SOCKET=$jcrypto_pkcs11_proxy_socket
@@ -214,8 +215,10 @@ function jcrypto_pkcs11_setup {
   jcrypto_pkcs11_test_name=$1
   jcrypto_pkcs11_prefix="$jcrypto_tmp_dir/$jcrypto_pkcs11_test_name"
   if [ -n "$JCRYPTO_PKCS11_PROXY" ]; then
+    jcrypto_pkcs11_type=proxy
     jcrypto_pkcs11_proxy_client_setup "$@"
   else
+    jcrypto_pkcs11_type=softhsm2
     jcrypto_pkcs11_softhsm2_setup "$@"
   fi
 
@@ -234,12 +237,17 @@ function jcrypto_pkcs11_generate_key {
 }
 
 function jcrypto_openssl_pkcs11_cnf_init {
-  jcrypto_openssl_cnf="$jcrypto_tmp_dir/openssl-$jcrypto_nginx_type.cnf"
+  jcrypto_openssl_cnf="$jcrypto_tmp_dir/openssl-$jcrypto_nginx_type-$1.cnf"
+  if [[ "$1" == "proxy" ]]; then
+    jcrypto_openssl_cnf_librarary="$jcrypto_pkcs11_proxy_library"
+  else
+    jcrypto_openssl_cnf_librarary="$jcrypto_pkcs11_softhsm2_library"
+  fi
   jcrypto_openssl_custom_dir="${OPENSSL_DIR:-/usr/local/ssl34}" # not exactly generic but my personal preference
 }
 
 function jcrypto_openssl_pkcs11_engine_cnf_setup {
-  jcrypto_openssl_pkcs11_cnf_init
+  jcrypto_openssl_pkcs11_cnf_init $@
   jcrypto_pkcs11_engine_default_paths=(
     "$jcrypto_openssl_custom_dir/lib64/engines-3/pkcs11.so"
     "/usr/lib/x86_64-linux-gnu/engines-3/pkcs11.so"
@@ -253,14 +261,14 @@ function jcrypto_openssl_pkcs11_engine_cnf_setup {
     echo "Please install libp11 or specify the engine path."
     exit 1
   fi
-  sed "s|__MODULE_PATH__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/openssl-pkcs11-engine.cnf.in" > "$jcrypto_openssl_cnf"
+  sed "s|__MODULE_PATH__|$jcrypto_openssl_cnf_librarary|g" "$jcrypto_conf_dir/openssl-pkcs11-engine.cnf.in" > "$jcrypto_openssl_cnf"
   sed -i "s|__ENGINE_PATH__|$jcrypto_libp11_path|g" "$jcrypto_openssl_cnf"
   export OPENSSL_CONF="$jcrypto_openssl_cnf"
   echo "Using OPENSSL_CONF=$jcrypto_openssl_cnf"
 }
 
 function jcrypto_openssl_pkcs11_provider_cnf_setup {
-  jcrypto_openssl_pkcs11_cnf_init
+  jcrypto_openssl_pkcs11_cnf_init $@
   jcrypto_pkcs11_provider_default_paths=(
     "$jcrypto_openssl_custom_dir/lib64/ossl-modules/pkcs11.so"
     "/usr/lib/x86_64-linux-gnu/ossl-modules/pkcs11.so"
@@ -274,7 +282,7 @@ function jcrypto_openssl_pkcs11_provider_cnf_setup {
     echo "Please install pkcs11 provider or specify the provider path."
     exit 1
   fi
-  sed "s|__MODULE_PATH__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/openssl-pkcs11-provider.cnf.in" > "$jcrypto_openssl_cnf"
+  sed "s|__MODULE_PATH__|$jcrypto_openssl_cnf_librarary|g" "$jcrypto_conf_dir/openssl-pkcs11-provider.cnf.in" > "$jcrypto_openssl_cnf"
   sed -i "s|__PROVIDER_PATH__|$jcrypto_p11prov_path|g" "$jcrypto_openssl_cnf"
   export OPENSSL_CONF="$jcrypto_openssl_cnf"
   echo "Using OPENSSL_CONF=$jcrypto_openssl_cnf"
@@ -328,12 +336,12 @@ function jcrypto_nginx_setup {
 
   if [[ $jcrypto_nginx_type == "pkcs11-engine" ]]; then
     jcrypto_pkcs11_setup $jcrypto_nginx_test_name
-    jcrypto_openssl_pkcs11_engine_cnf_setup
+    jcrypto_openssl_pkcs11_engine_cnf_setup $jcrypto_pkcs11_type
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
     jcrypto_nginx_ssl_key='"engine:pkcs11:pkcs11:token=jCryptoTestToken;object='$jcrypto_nginx_priv_key_alias'?pin-value=1234"'
   elif [[ $jcrypto_nginx_type == "pkcs11-provider" ]]; then
     jcrypto_pkcs11_setup $jcrypto_nginx_test_name
-    jcrypto_openssl_pkcs11_provider_cnf_setup
+    jcrypto_openssl_pkcs11_provider_cnf_setup $jcrypto_pkcs11_type
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
     jcrypto_nginx_ssl_key="$jcrypto_tmp_dir/$jcrypto_nginx_test_name-priv-key.pem"
     jcrypto_pkc11_uri="pkcs11:token=jCryptoTestToken;object=$jcrypto_nginx_priv_key_alias;type=private"
