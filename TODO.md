@@ -6,6 +6,8 @@
     - for example CTR accepts only 20 bytes
  
 ## CMS
+- KEK secret key should be converted to binary when encoding so OpenSSL can decrypt it
+  - OpenSSL cms app is using OPENSSL_hexstr2buf for this value so it does not match
 - Add CMSEnvelop tests
 - Add RecipientHandler tests
 - Add RecipientInfoGeneratorFactory tests
