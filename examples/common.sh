@@ -345,6 +345,7 @@ function jcrypto_nginx_setup {
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
     jcrypto_nginx_ssl_key="$jcrypto_tmp_dir/$jcrypto_nginx_test_name-priv-key.pem"
     jcrypto_pkc11_uri="pkcs11:token=jCryptoTestToken;object=$jcrypto_nginx_priv_key_alias;type=private"
+    echo "Using PKCS11 URI: $jcrypto_pkc11_uri"
     jcrypto_pkcs11_provider_make_pkcs11_uri_pem $jcrypto_pkc11_uri > "$jcrypto_nginx_ssl_key"
   else
     jcrypto_nginx_ssl_cert="$jcrypto_data_dir/nginx_cert_ec_secp256r1.pem"
