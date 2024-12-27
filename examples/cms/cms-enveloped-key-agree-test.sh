@@ -31,9 +31,9 @@ echo "OPENSSL ENCRYPT"
 jcrypto_openssl cms -encrypt -in "$jcrypto_this_dir/in-cms-data.txt" -out "$jcrypto_out_ossl_enc_file" \
   -outform PEM -recip "$jcrypto_recip_cert_file" -aes-128-cbc
 # The below is not currently supported and crashes openssl because only pubkey empheral key is supported for encryption
-#jcrypto_openssl cms -encrypt -in "$jcrypto_this_dir/in-cms-data.txt" -out "$jcrypto_out_ossl_enc_file" \
-#  -outform PEM -recip "$jcrypto_recip_cert_file" -inkey "$jcrypto_orig_priv_ec_key" \
-#  -originator "$jcrypto_orig_cert_file" -aes-128-cbc
+jcrypto_openssl cms -encrypt -in "$jcrypto_this_dir/in-cms-data.txt" -out "$jcrypto_out_ossl_enc_file" \
+  -outform PEM -recip "$jcrypto_recip_cert_file" -inkey "$jcrypto_orig_priv_ec_key" \
+  -originator "$jcrypto_orig_cert_file" -aes-128-cbc
 jcrypto_dump_pem "$jcrypto_out_ossl_enc_file"
 
 echo "OPENSSL DECRYPT OF OPENSSL"
