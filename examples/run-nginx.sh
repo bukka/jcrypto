@@ -40,7 +40,10 @@ else
   fi
 fi
 
-jcrypto_nginx_setup "$jcrypto_nginx_type" "$jcrypto_nginx_test_name" "$jcrypto_nginx_cert_path" "$jcrypto_nginx_key_alias" 4443 8089
+jcrypto_nginx_client_cert_path="$jcrypto_data_dir/nginx_ca_cert_ec_secp256r1.pem"
+
+jcrypto_nginx_setup "$jcrypto_nginx_type" "$jcrypto_nginx_test_name" "$jcrypto_nginx_cert_path" \
+  "$jcrypto_nginx_key_alias" 4443 8089 "$jcrypto_nginx_client_cert_path"
 
 if [ -n "$jcrypto_create_cert" ]; then
   jcrypto_curve_name=$5

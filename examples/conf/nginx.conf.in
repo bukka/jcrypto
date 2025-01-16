@@ -25,8 +25,12 @@ http {
         ssl_certificate      __SSL_CERT__;
         ssl_certificate_key  __SSL_KEY__;
 
+        ssl_client_certificate __SSL_CLIENT_CERT__;
+        ssl_verify_client optional;
+
         ssl_protocols TLSv1.2;
-        ssl_ciphers 'ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA';
+        ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-CBC-SHA256:ECDHE-ECDSA-AES256-CBC-SHA384;
+        ssl_ecdh_curve prime256v1:secp384r1:brainpoolP256r1:brainpoolP384r1:brainpoolP512r1;
         ssl_prefer_server_ciphers on;
 
         location / {

@@ -319,6 +319,7 @@ function jcrypto_nginx_conf_setup {
 
   sed "s|__SSL_CERT__|$jcrypto_nginx_ssl_cert|g" "$jcrypto_conf_dir/nginx.conf.in" > "$jcrypto_nginx_conf"
   sed -i "s|__SSL_KEY__|$jcrypto_nginx_ssl_key|g" "$jcrypto_nginx_conf"
+  sed -i "s|__SSL_CLIENT_CERT__|$jcrypto_nginx_client_cert_path|g" "$jcrypto_nginx_conf"
   sed -i "s|__LISTEN_PORT__|$jcrypto_nginx_listen_port|g" "$jcrypto_nginx_conf"
   sed -i "s|__PROXY_PORT__|$jcrypto_nginx_proxy_port|g" "$jcrypto_nginx_conf"
   sed -i "s|__PID_FILE__|$jcrypto_tmp_dir/nginx-$jcrypto_nginx_type.pid|g" "$jcrypto_nginx_conf"
@@ -333,6 +334,7 @@ function jcrypto_nginx_setup {
   jcrypto_nginx_priv_key_alias=$4
   jcrypto_nginx_listen_port=$5
   jcrypto_nginx_proxy_port=$6
+  jcrypto_nginx_client_cert_path=$7
 
   if [[ $jcrypto_nginx_type == "pkcs11-engine" ]]; then
     jcrypto_pkcs11_setup $jcrypto_nginx_test_name
@@ -344,7 +346,7 @@ function jcrypto_nginx_setup {
     jcrypto_openssl_pkcs11_provider_cnf_setup $jcrypto_pkcs11_type
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
     jcrypto_nginx_ssl_key="$jcrypto_tmp_dir/$jcrypto_nginx_test_name-priv-key.pem"
-    jcrypto_pkc11_uri="pkcs11:token=jCryptoTestToken;object=$jcrypto_nginx_priv_key_alias;type=private"
+    jcrypto_pkc11_uri="pkcs11:token=jCryptoTestToken;object=$jcrypto_nginx_priv_key_alias;type=private?pin-value=1234"
     echo "Using PKCS11 URI: $jcrypto_pkc11_uri"
     jcrypto_pkcs11_provider_make_pkcs11_uri_pem $jcrypto_pkc11_uri > "$jcrypto_nginx_ssl_key"
   else
