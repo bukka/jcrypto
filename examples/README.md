@@ -264,6 +264,12 @@ Then it is possible to send curl request from examples/ directory using:
 curl -X POST https://localhost:4443/pkey/sign --data-binary @pkey/in-pkey-data.txt -k
 ```
 
+Or with client certificate using:
+
+```shell
+curl --cert data/nginx_client_cert_bundle_ec_secp256r1.pem -X POST https://localhost:4443/pkey/sign --data-binary @pkey/in-pkey-data.txt -k
+```
+
 It is possible to also test the daemon restart. In such case the running daemon should be stopped
 using CTRL+C and then started again but without recreating the keys:
 
