@@ -93,10 +93,15 @@ function jcrypto_pkcs11_make_java_config {
 
 function jcrypto_pkcs11_softhsm2_init_token {
   # Initialize the token
-  softhsm2-util --init-token --slot 0 --label "jCryptoTestToken" --so-pin 1234 --pin 1234 || {
+  softhsm2-util --init-token --slot 0 --label "jCryptoTestDefaultToken" --so-pin 1234 --pin 1234 || {
     echo "Error: Failed to initialize token."
     exit 1
   }
+
+  softhsm2-util --init-token --slot 1 --label "jCryptoTestKeyToken" --so-pin 5678 --pin 5678 || {
+      echo "Error: Failed to initialize token."
+      exit 1
+    }
 }
 
 function jcrypto_pkcs11_softhsm2_setup {
@@ -340,13 +345,13 @@ function jcrypto_nginx_setup {
     jcrypto_pkcs11_setup $jcrypto_nginx_test_name
     jcrypto_openssl_pkcs11_engine_cnf_setup $jcrypto_pkcs11_type
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
-    jcrypto_nginx_ssl_key='"engine:pkcs11:pkcs11:token=jCryptoTestToken;object='$jcrypto_nginx_priv_key_alias'?pin-value=1234"'
+    jcrypto_nginx_ssl_key='"engine:pkcs11:pkcs11:token=jCryptoTestKeyToken;object='$jcrypto_nginx_priv_key_alias'?pin-value=5678"'
   elif [[ $jcrypto_nginx_type == "pkcs11-provider" ]]; then
     jcrypto_pkcs11_setup $jcrypto_nginx_test_name
     jcrypto_openssl_pkcs11_provider_cnf_setup $jcrypto_pkcs11_type
     jcrypto_nginx_ssl_cert="$jcrypto_nginx_cert_path"
     jcrypto_nginx_ssl_key="$jcrypto_tmp_dir/$jcrypto_nginx_test_name-priv-key.pem"
-    jcrypto_pkc11_uri="pkcs11:token=jCryptoTestToken;object=$jcrypto_nginx_priv_key_alias;type=private?pin-value=1234"
+    jcrypto_pkc11_uri="pkcs11:token=jCryptoTestKeyToken;object=$jcrypto_nginx_priv_key_alias;type=private?pin-value=5678"
     echo "Using PKCS11 URI: $jcrypto_pkc11_uri"
     jcrypto_pkcs11_provider_make_pkcs11_uri_pem $jcrypto_pkc11_uri > "$jcrypto_nginx_ssl_key"
   else
