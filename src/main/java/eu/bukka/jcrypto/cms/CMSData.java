@@ -48,8 +48,7 @@ abstract public class CMSData extends CMSBase {
         this.options = options;
     }
 
-    protected Algorithm getAlgorithm() {
-        String algorithm = options.getAlgorithm().toUpperCase();
+    protected Algorithm getAlgorithm(String algorithm) {
         switch (algorithm) {
             case "AES128_GCM":
             case "AES-128-GCM":
@@ -66,6 +65,18 @@ abstract public class CMSData extends CMSBase {
             default:
                 throw new InvalidParameterException("Invalid algorithm " + algorithm);
         }
+    }
+
+    protected Algorithm getAlgorithm() {
+        return getAlgorithm(options.getAlgorithm().toUpperCase());
+    }
+
+    protected Algorithm getKeyAlgorithm() {
+        String keyAlgorithm = options.getKeyAlgorithm();
+        if (keyAlgorithm == null) {
+            keyAlgorithm = options.getAlgorithm();
+        }
+        return getAlgorithm(keyAlgorithm.toUpperCase());
     }
 
     protected Form getForm() {

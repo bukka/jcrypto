@@ -25,9 +25,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-public class RecipientData {
-    CMSEnvelopeOptions options;
-
+public class RecipientData extends CMSData {
     X509Certificate certificate;
 
     X509Certificate recipientCertificate;
@@ -35,7 +33,7 @@ public class RecipientData {
     X509Certificate senderCertificate;
 
     public RecipientData(CMSEnvelopeOptions options) {
-        this.options = options;
+        super(options);
     }
 
     protected byte[] getSecretKeyId() {

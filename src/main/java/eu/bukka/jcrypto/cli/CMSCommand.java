@@ -25,6 +25,12 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
     private String secretKeyIdentifier;
 
+    @Option(names = {"--password"}, description = "Password for password recipient type")
+    private String password;
+
+    @Option(names = {"--key-algorithm"}, description = "Key algorithm for password recipient type")
+    private String keyAlgorithm;
+
     @Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
     private File certificateFile;
 
@@ -57,6 +63,16 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Override
     public String getSecretKeyIdentifier() {
         return secretKeyIdentifier;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getKeyAlgorithm() {
+        return keyAlgorithm;
     }
 
     @Override

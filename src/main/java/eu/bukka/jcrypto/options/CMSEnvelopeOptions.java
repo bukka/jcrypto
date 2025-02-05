@@ -9,6 +9,10 @@ public interface CMSEnvelopeOptions extends CommonOptions {
 
     String getSecretKeyIdentifier();
 
+    String getPassword();
+
+    String getKeyAlgorithm();
+
     File getCertificateFile();
 
     File getRecipientCertificateFile();

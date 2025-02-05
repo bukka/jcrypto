@@ -9,6 +9,7 @@ import org.bouncycastle.cms.RecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.JceKEKRecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.JceKeyAgreeRecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
+import org.bouncycastle.cms.jcajce.JcePasswordRecipientInfoGenerator;
 
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -20,6 +21,13 @@ public class RecipientInfoGeneratorFactory extends RecipientData {
 
     private RecipientInfoGenerator createForKEK() {
         return new JceKEKRecipientInfoGenerator(getSecretKeyId(), getSecretKey()).setProvider("BC");
+    }
+
+    private RecipientInfoGenerator createForPassword() {
+        Algorithm keyAlgorithm = getKeyAlgorithm();
+        // TODO: Add check for AEAD as it should not work
+        return new JcePasswordRecipientInfoGenerator(keyAlgorithm.getIdentifier(),
+                options.getPassword().toCharArray()).setProvider("BC");
     }
 
     private ASN1ObjectIdentifier getKeyAgreeOID() throws CMSException {
@@ -59,6 +67,8 @@ public class RecipientInfoGeneratorFactory extends RecipientData {
             return createForKeyAgree();
         } else if (options.getSecretKey() != null && options.getSecretKeyIdentifier() != null) {
             return createForKEK();
+        } else if (options.getPassword() != null) {
+            return createForPassword();
         } else {
             throw new CMSException("No options to create recipient info");
         }
