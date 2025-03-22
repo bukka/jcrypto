@@ -19,6 +19,9 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Option(names = {"-c", "--cipher"}, description = "Cipher to use")
     private String algorithm = "aes-256-cbc";
 
+    @Option(names = {"--content-type"}, description = "Content type to force")
+    private String contentType;
+
     @Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
     private String secretKey;
 
@@ -53,6 +56,11 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Override
     public String getAlgorithm() {
         return algorithm;
+    }
+
+    @Override
+    public String getContentType() {
+        return contentType;
     }
 
     @Override

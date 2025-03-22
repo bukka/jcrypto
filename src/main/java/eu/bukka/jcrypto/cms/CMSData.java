@@ -71,14 +71,6 @@ abstract public class CMSData extends CMSBase {
         return getAlgorithm(options.getAlgorithm().toUpperCase());
     }
 
-    protected Algorithm getKeyAlgorithm() {
-        String keyAlgorithm = options.getKeyAlgorithm();
-        if (keyAlgorithm == null) {
-            keyAlgorithm = options.getAlgorithm();
-        }
-        return getAlgorithm(keyAlgorithm.toUpperCase());
-    }
-
     protected Form getForm() {
         String form = options.getForm();
         switch (form) {

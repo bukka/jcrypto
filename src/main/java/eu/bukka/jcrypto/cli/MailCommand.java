@@ -16,11 +16,20 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @CommandLine.Option(names = {"-c", "--cipher"}, description = "Cipher to use")
     private String algorithm = "aes-256-cbc";
 
+    @CommandLine.Option(names = {"--content-type"}, description = "Content type to force")
+    private String contentType;
+
     @CommandLine.Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
     private String secretKey;
 
     @CommandLine.Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
     private String secretKeyIdentifier;
+
+    @CommandLine.Option(names = {"--password"}, description = "Password for password recipient type")
+    private String password;
+
+    @CommandLine.Option(names = {"--key-algorithm"}, description = "Key algorithm for password recipient type")
+    private String keyAlgorithm;
 
     @CommandLine.Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
     private File certificateFile;
@@ -62,6 +71,11 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     }
 
     @Override
+    public String getContentType() {
+        return contentType;
+    }
+
+    @Override
     public String getSecretKey() {
         return secretKey;
     }
@@ -69,6 +83,16 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @Override
     public String getSecretKeyIdentifier() {
         return secretKeyIdentifier;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getKeyAlgorithm() {
+        return keyAlgorithm;
     }
 
     @Override

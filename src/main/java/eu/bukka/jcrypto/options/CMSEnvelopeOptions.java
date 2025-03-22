@@ -5,6 +5,8 @@ import java.io.File;
 public interface CMSEnvelopeOptions extends CommonOptions {
     String getAlgorithm();
 
+    String getContentType();
+
     String getSecretKey();
 
     String getSecretKeyIdentifier();

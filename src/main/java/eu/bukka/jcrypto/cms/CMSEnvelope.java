@@ -15,6 +15,8 @@ import org.bouncycastle.util.io.pem.PemObject;
 import java.io.*;
 
 public class CMSEnvelope extends CMSData {
+    private boolean isAuthEnveloped;
+
     public CMSEnvelope(CMSEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
                        RecipientHandler recipientHandler) {
         super(options, recipientInfoGeneratorFactory, recipientHandler);
@@ -22,6 +24,8 @@ public class CMSEnvelope extends CMSData {
 
     public CMSEnvelope(CMSEnvelopeOptions options) {
         super(options);
+        isAuthEnveloped = getAlgorithm().isAuthenticated() && (
+                options.getContentType() == null || options.getContentType().equals("authEnveloped-data"));
     }
 
     public void encrypt() throws IOException, CMSException {
@@ -29,10 +33,9 @@ public class CMSEnvelope extends CMSData {
 
         byte[] encodedData;
         CMSTypedData data = new CMSProcessableByteArray(options.getInputData());
-        Algorithm algorithm = getAlgorithm();
-        OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(algorithm.getIdentifier())
+        OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(getAlgorithm().getIdentifier())
                 .setProvider("BC").build();
-        if (algorithm.isAuthenticated()) {
+        if (this.isAuthEnveloped) {
             CMSAuthEnvelopedDataGenerator authEnvDataGenerator = new CMSAuthEnvelopedDataGenerator();
             authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
             CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor) encryptor);
@@ -64,12 +67,11 @@ public class CMSEnvelope extends CMSData {
     }
 
     private RecipientInformationStore getDataRecipients() throws IOException, CMSException {
-        Algorithm algorithm = getAlgorithm();
         byte[] inputData = options.getInputData();
         if (getForm() == Form.PEM) {
             inputData = convertPemToBer(inputData);
         }
-        if (algorithm.isAuthenticated()) {
+        if (this.isAuthEnveloped) {
             CMSAuthEnvelopedData authEnvelopedData = new CMSAuthEnvelopedData(inputData);
             return authEnvelopedData.getRecipientInfos();
         } else {
@@ -80,7 +82,7 @@ public class CMSEnvelope extends CMSData {
 
     public void decrypt() throws IOException, CMSException {
         RecipientInformationStore recipients = getDataRecipients();
-        byte[] decryptedData = recipientHandler.getContent(recipients, getAlgorithm().isAuthenticated());
+        byte[] decryptedData = recipientHandler.getContent(recipients, this.isAuthEnveloped);
         if (getForm() == Form.PEM) {
             JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
             writer.write(Strings.fromByteArray(decryptedData));
