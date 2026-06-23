@@ -18,13 +18,17 @@ public class CommonCommand implements CommonOptions {
     @CommandLine.Option(names = {"-o", "--out"}, description = "Output file")
     private File outputFile;
 
-    @CommandLine.Option(names = {"-f", "--form"}, description = "Input and output form")
+    @CommandLine.Option(names = {"-f", "--form"},
+            description = "Input/output encoding: PEM or DER (BER is read as DER). "
+                    + "Used by cms, mail and pkey; ignored by cipher (raw bytes).")
     private String form = "PEM";
 
-    @CommandLine.Option(names = {"--provider-name"}, description = "Preferred provider name")
+    @CommandLine.Option(names = {"--provider-name"},
+            description = "Preferred JCA provider name: BC or SunPKCS11.")
     private String providerName = "BC";
 
-    @CommandLine.Option(names = {"--provider-config-file"}, description = "Preferred provider config file")
+    @CommandLine.Option(names = {"--provider-config-file"},
+            description = "Provider config file (required for SunPKCS11).")
     private File providerConfigFile;
 
     private Provider provider;

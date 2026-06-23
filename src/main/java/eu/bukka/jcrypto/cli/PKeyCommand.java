@@ -16,37 +16,58 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "pkey", mixinStandardHelpOptions = true,
-        description = "Public and private key utils.")
+@CommandLine.Command(name = "pkey", mixinStandardHelpOptions = true, showDefaultValues = true, usageHelpWidth = 100,
+        description = "Public and private key utilities: generate keys, sign/verify, derive shared secrets "
+                + "and run the signing server.",
+        footer = {
+                "",
+                "Examples:",
+                "  Generate an EC key pair and certificate:",
+                "    jcrypto pkey generate -a EC --parameters secp256r1 --form PEM \\",
+                "      --private-key-file priv.pem --public-key-file pub.pem --certificate-file cert.pem",
+                "  Sign and verify:",
+                "    jcrypto pkey sign -a ECDSA --private-key-file priv.pem -i data.txt -o sig.bin",
+                "    jcrypto pkey verify -a ECDSA --public-key-file pub.pem -i data.txt --signature-file sig.bin",
+                "  Derive an ECDH shared secret:",
+                "    jcrypto pkey derive -a ECDH --private-key-file priv.pem \\",
+                "      --public-key-file peer-pub.pem -o secret.bin",
+                "  Signing server:",
+                "    jcrypto pkey server start --port 8080 --pid-file pkey.pid",
+                "    jcrypto pkey server stop --pid-file pkey.pid"
+        })
 public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKeyOptions {
-    @CommandLine.Parameters(index = "0", description = "Action")
+    @CommandLine.Parameters(index = "0", paramLabel = "<action>",
+            description = "Operation: generate, sign, verify, derive or server")
     private String action;
 
-    @CommandLine.Parameters(index = "1", arity = "0..1", description = "Sub Action")
+    @CommandLine.Parameters(index = "1", arity = "0..1", paramLabel = "<sub-action>",
+            description = "Sub-operation; for server: start or stop")
     private String subAction;
 
-    @CommandLine.Option(names = {"-a", "--algorithm"}, description = "Algorithm to use")
+    @CommandLine.Option(names = {"-a", "--algorithm"},
+            description = "Algorithm, e.g. EC or RSA (generate), ECDSA (sign/verify), ECDH (derive).")
     private String algorithm;
 
     @CommandLine.Option(names = {"--private-key-file"}, description = "Private key file")
     private File privateKeyFile;
 
-    @CommandLine.Option(names = {"--private-key-alias"}, description = "Private key alias")
+    @CommandLine.Option(names = {"--private-key-alias"}, description = "Private key alias (keystore/PKCS11)")
     private String privateKeyAlias;
 
     @CommandLine.Option(names = {"--public-key-file"}, description = "Public key file")
     private File publicKeyFile;
 
-    @CommandLine.Option(names = {"--public-key-alias"}, description = "Public key alias")
+    @CommandLine.Option(names = {"--public-key-alias"}, description = "Public key alias (keystore/PKCS11)")
     private String publicKeyAlias;
 
     @CommandLine.Option(names = {"--certificate-file"}, description = "Certificate file")
     private File certificateFile;
 
-    @CommandLine.Option(names = {"--certificate-alias"}, description = "Certificate alias")
+    @CommandLine.Option(names = {"--certificate-alias"}, description = "Certificate alias (keystore/PKCS11)")
     private String certificatAlias;
 
-    @CommandLine.Option(names = {"--signature-file"}, description = "Public key file")
+    @CommandLine.Option(names = {"--signature-file"},
+            description = "Signature file (verify input; sign may use this or -o)")
     private File signatureFile;
 
     @CommandLine.Option(names = {"--key-store-name"}, description = "Key store name")
@@ -55,10 +76,11 @@ public class PKeyCommand extends CommonCommand implements Callable<Integer>, PKe
     @CommandLine.Option(names = {"--key-store-password"}, description = "Key store password (PIN for PKCS11)")
     private String keyStorePassword;
 
-    @CommandLine.Option(names = {"--parameters"}, description = "Algorithm-specific parameters (e.g., curve name for EC)")
+    @CommandLine.Option(names = {"--parameters"},
+            description = "Algorithm-specific parameters, e.g. EC curve name like secp256r1 or prime256v1.")
     private String parameters;
 
-    @CommandLine.Option(names = {"--port"}, description = "Port for the server (default: 8080)")
+    @CommandLine.Option(names = {"--port"}, description = "Port for the server")
     private int port = 8080;
 
     @CommandLine.Option(names = {"--pid-file"}, description = "File to store server PID")

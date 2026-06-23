@@ -11,55 +11,96 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-@Command(name = "cms", mixinStandardHelpOptions = true,
-        description = "Processing RFC 3852 Cryptographic Message Syntax (CMS).")
+@Command(name = "cms", mixinStandardHelpOptions = true, showDefaultValues = true, usageHelpWidth = 100,
+        description = {
+                "Generate and open RFC 5652 CMS enveloped-data and authEnveloped-data.",
+                "The recipient type is selected by which options you provide:",
+                "  KEK       --secret-key + --secret-key-id",
+                "  KeyTrans  --cert (encrypt), --cert + --private-key (decrypt)",
+                "  KeyAgree  --sender-cert + --private-key + --recipient-cert (encrypt),",
+                "            --recipient-cert + --private-key (decrypt)",
+                "  Password  --password",
+                "An AEAD cipher (GCM) produces authEnveloped-data unless --content-type overrides it."
+        },
+        footer = {
+                "",
+                "Examples:",
+                "  KEK (shared secret):",
+                "    jcrypto cms encrypt -c aes-128-cbc --secret-key=000102030405060708090a0b0c0d0e0f \\",
+                "      --secret-key-id=C0FEE0 -i in.txt -o out.pem",
+                "    jcrypto cms decrypt -c aes-128-cbc --secret-key=000102030405060708090a0b0c0d0e0f \\",
+                "      --secret-key-id=C0FEE0 -i out.pem -o dec.txt",
+                "  KeyTrans (RSA):",
+                "    jcrypto cms encrypt -c aes-128-cbc --cert recipient.pem -i in.txt -o out.pem",
+                "    jcrypto cms decrypt -c aes-128-cbc --cert recipient.pem --private-key recipient.key \\",
+                "      -i out.pem -o dec.txt",
+                "  KeyAgree (EC):",
+                "    jcrypto cms encrypt -c aes-128-gcm --sender-cert sender.pem --private-key sender.key \\",
+                "      --recipient-cert recipient.pem -i in.txt -o out.pem",
+                "    jcrypto cms decrypt -c aes-128-gcm --recipient-cert recipient.pem \\",
+                "      --private-key recipient.key -i out.pem -o dec.txt",
+                "  authEnveloped-data with attributes (GCM):",
+                "    jcrypto cms encrypt -c aes-128-gcm --secret-key=000102030405060708090a0b0c0d0e0f \\",
+                "      --secret-key-id=C0FEE0 --auth-attr 1.3.6.1.4.1.99999.1=hello \\",
+                "      --unauth-attr 1.3.6.1.4.1.99999.2=world -i in.txt -o out.pem"
+        })
 public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSEnvelopeOptions {
-    @Parameters(index = "0", description = "Mode")
+    @Parameters(index = "0", paramLabel = "<mode>", description = "Operation: encrypt or decrypt")
     private String mode;
 
-    @Option(names = {"-c", "--cipher"}, description = "Cipher to use")
+    @Option(names = {"-c", "--cipher"},
+            description = "Content cipher: aes-128-cbc, aes-256-cbc, aes-128-gcm or aes-256-gcm (GCM is AEAD).")
     private String algorithm = "aes-256-cbc";
 
-    @Option(names = {"--content-type"}, description = "Content type to force")
+    @Option(names = {"--content-type"},
+            description = "Force output structure for AEAD ciphers: enveloped-data or authEnveloped-data "
+                    + "(default for GCM: authEnveloped-data).")
     private String contentType;
 
-    @Option(names = {"--auth-attr"}, description = "Authenticated attribute as OID=value "
-            + "(repeatable, authEnveloped-data only)")
+    @Option(names = {"--auth-attr"}, description = "authEnveloped-data only: authenticated attribute as "
+            + "OID=value (repeatable); covered by the AEAD tag.")
     private Map<String, String> authenticatedAttributes;
 
-    @Option(names = {"--unauth-attr"}, description = "Unauthenticated attribute as OID=value "
-            + "(repeatable, authEnveloped-data only)")
+    @Option(names = {"--unauth-attr"}, description = "authEnveloped-data only: unauthenticated attribute as "
+            + "OID=value (repeatable).")
     private Map<String, String> unauthenticatedAttributes;
 
-    @Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
+    @Option(names = {"--secret-key"}, description = "KEK recipient: shared secret key, in hex.")
     private String secretKey;
 
-    @Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
+    @Option(names = {"--secret-key-id"},
+            description = "KEK recipient: key identifier label, paired with --secret-key.")
     private String secretKeyIdentifier;
 
-    @Option(names = {"--password"}, description = "Password for password recipient type")
+    @Option(names = {"--password"}, description = "Password recipient: password.")
     private String password;
 
-    @Option(names = {"--key-algorithm"}, description = "Key algorithm for password recipient type")
+    @Option(names = {"--key-algorithm"},
+            description = "Password recipient: key-encryption cipher (defaults to --cipher).")
     private String keyAlgorithm;
 
-    @Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
+    @Option(names = {"--cert"}, description = "KeyTrans recipient: recipient certificate (PEM).")
     private File certificateFile;
 
-    @CommandLine.Option(names = {"--sender-cert"}, description = "Sender certificate for KeyAgree recipient type")
+    @CommandLine.Option(names = {"--sender-cert"},
+            description = "KeyAgree recipient: sender/originator certificate (PEM).")
     private File senderCertificateFile;
 
-    @CommandLine.Option(names = {"--recipient-cert"}, description = "Recipient certificate for KeyAgree recipient type")
+    @CommandLine.Option(names = {"--recipient-cert"},
+            description = "KeyAgree recipient: recipient certificate (PEM).")
     private File recipientCertificateFile;
 
-    @CommandLine.Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
+    @CommandLine.Option(names = {"--private-key"},
+            description = "Private key (PEM): originator key when encrypting (KeyAgree), "
+                    + "or recipient key when decrypting (KeyTrans/KeyAgree).")
     private File privateKeyFile;
 
     @CommandLine.Option(names = {"--public-key"},
-            description = "Public key for KeyAgree recipient type (alternative to cert)")
+            description = "KeyAgree recipient: recipient public key (alternative to --recipient-cert).")
     private File publicKeyFile;
 
-    @CommandLine.Option(names = {"--stream"}, description = "Whether to use streamed parsing")
+    @CommandLine.Option(names = {"--stream"},
+            description = "Use streamed parsing (SMIME only; no effect on cms).")
     private boolean stream = false;
 
     @Override

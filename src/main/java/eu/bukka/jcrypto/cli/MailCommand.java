@@ -8,62 +8,82 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "mail", mixinStandardHelpOptions = true,
-        description = "Processing Mail using SMIME.")
+@CommandLine.Command(name = "mail", mixinStandardHelpOptions = true, showDefaultValues = true, usageHelpWidth = 100,
+        description = {
+                "Generate and open S/MIME enveloped messages.",
+                "Recipient type is selected like the cms command (KeyTrans via --cert is typical)."
+        },
+        footer = {
+                "",
+                "Examples:",
+                "  Encrypt to a recipient certificate:",
+                "    jcrypto mail encrypt -c aes-128-cbc --cert recipient.pem \\",
+                "      --from alice@example.com --to bob@example.com --subject Hello -i in.txt -o out.eml",
+                "  Decrypt with the recipient private key:",
+                "    jcrypto mail decrypt -c aes-128-cbc --cert recipient.pem --private-key recipient.key \\",
+                "      -i out.eml -o dec.txt"
+        })
 public class MailCommand extends CommonCommand implements Callable<Integer>, MailSMIMEEnvelopeOptions {
-    @CommandLine.Parameters(index = "0", description = "Mode")
+    @CommandLine.Parameters(index = "0", paramLabel = "<mode>", description = "Operation: encrypt or decrypt")
     private String mode;
 
-    @CommandLine.Option(names = {"-c", "--cipher"}, description = "Cipher to use")
+    @CommandLine.Option(names = {"-c", "--cipher"},
+            description = "Content cipher: aes-128-cbc, aes-256-cbc, aes-128-gcm or aes-256-gcm (GCM is AEAD).")
     private String algorithm = "aes-256-cbc";
 
-    @CommandLine.Option(names = {"--content-type"}, description = "Content type to force")
+    @CommandLine.Option(names = {"--content-type"},
+            description = "Force output structure for AEAD ciphers: enveloped-data or authEnveloped-data.")
     private String contentType;
 
-    @CommandLine.Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
+    @CommandLine.Option(names = {"--secret-key"}, description = "KEK recipient: shared secret key, in hex.")
     private String secretKey;
 
-    @CommandLine.Option(names = {"--secret-key-id"}, description = "Secret key for KEK recipient type")
+    @CommandLine.Option(names = {"--secret-key-id"},
+            description = "KEK recipient: key identifier label, paired with --secret-key.")
     private String secretKeyIdentifier;
 
-    @CommandLine.Option(names = {"--password"}, description = "Password for password recipient type")
+    @CommandLine.Option(names = {"--password"}, description = "Password recipient: password.")
     private String password;
 
-    @CommandLine.Option(names = {"--key-algorithm"}, description = "Key algorithm for password recipient type")
+    @CommandLine.Option(names = {"--key-algorithm"},
+            description = "Password recipient: key-encryption cipher (defaults to --cipher).")
     private String keyAlgorithm;
 
-    @CommandLine.Option(names = {"--cert"}, description = "Certificate for KeyTrans recipient type")
+    @CommandLine.Option(names = {"--cert"}, description = "KeyTrans recipient: recipient certificate (PEM).")
     private File certificateFile;
 
-    @CommandLine.Option(names = {"--sender-cert"}, description = "Sender certificate for KeyAgree recipient type")
+    @CommandLine.Option(names = {"--sender-cert"},
+            description = "KeyAgree recipient: sender/originator certificate (PEM).")
     private File senderCertificateFile;
 
-    @CommandLine.Option(names = {"--recipient-cert"}, description = "Recipient certificate for KeyAgree recipient type")
+    @CommandLine.Option(names = {"--recipient-cert"},
+            description = "KeyAgree recipient: recipient certificate (PEM).")
     private File recipientCertificateFile;
 
-    @CommandLine.Option(names = {"--private-key"}, description = "Private key for KeyTrans recipient type")
+    @CommandLine.Option(names = {"--private-key"},
+            description = "Private key (PEM): recipient key when decrypting (KeyTrans/KeyAgree).")
     private File privateKeyFile;
 
     @CommandLine.Option(names = {"--public-key"},
-            description = "Public key for KeyAgree recipient type (alternative to cert)")
+            description = "KeyAgree recipient: recipient public key (alternative to --recipient-cert).")
     private File publicKeyFile;
 
-    @CommandLine.Option(names = {"--from"}, description = "Mail From")
+    @CommandLine.Option(names = {"--from"}, description = "Mail From header.")
     private String mailFrom;
 
-    @CommandLine.Option(names = {"--to"}, description = "Mail To")
+    @CommandLine.Option(names = {"--to"}, description = "Mail To header.")
     private String mailTo;
 
-    @CommandLine.Option(names = {"--subject"}, description = "Mail subject")
+    @CommandLine.Option(names = {"--subject"}, description = "Mail Subject header.")
     private String mailSubject;
 
-    @CommandLine.Option(names = {"--mime-type"}, description = "Mail content mime type")
+    @CommandLine.Option(names = {"--mime-type"}, description = "Content MIME type.")
     private String mimeType = "text/plain";
 
-    @CommandLine.Option(names = {"--charset"}, description = "Charset for text mime type")
+    @CommandLine.Option(names = {"--charset"}, description = "Charset for text MIME types.")
     private String charset = "UTF-8";
 
-    @CommandLine.Option(names = {"--stream"}, description = "Whether to use streamed parsing")
+    @CommandLine.Option(names = {"--stream"}, description = "Use streamed S/MIME parsing.")
     private boolean stream = false;
 
     @Override
