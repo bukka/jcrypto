@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Wrapper that runs the jcrypto assembly jar with all passed arguments.
+# Symlink it onto your PATH, e.g.:
+#
+#   ln -s "$(pwd)/bin/jcrypto" ~/.local/bin/jcrypto
+#
+# The jar is resolved relative to this script (following symlinks), so the
+# command always runs the latest local build produced by `mvn package`.
+
+set -euo pipefail
+
+script="$(readlink -f "${BASH_SOURCE[0]}")"
+root="$(dirname "$(dirname "$script")")"
+
+jar="$(ls -t "$root"/target/jcrypto-*-jar-with-dependencies.jar 2>/dev/null | head -1 || true)"
+if [[ -z "$jar" ]]; then
+  echo "jcrypto: assembly jar not found; build it first with 'mvn -f $root/pom.xml package'" >&2
+  exit 1
+fi
+
+exec java -jar "$jar" "$@"
