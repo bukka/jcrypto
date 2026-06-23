@@ -39,7 +39,7 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     private String secretKey;
 
     @CommandLine.Option(names = {"--secret-key-id"},
-            description = "KEK recipient: key identifier label, paired with --secret-key.")
+            description = "KEK recipient: key identifier, in hex; paired with --secret-key.")
     private String secretKeyIdentifier;
 
     @CommandLine.Option(names = {"--password"}, description = "Password recipient: password.")

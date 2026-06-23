@@ -9,7 +9,11 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.cms.CMSAuthEnvelopedData;
+import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSException;
+import org.bouncycastle.cms.KEKRecipientId;
+import org.bouncycastle.cms.RecipientInformation;
+import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -97,6 +101,16 @@ class CMSEnvelopeTest extends CommonTest {
     @Test
     void kekAuthEnvelopedAes128Gcm() throws Exception {
         assertRoundTrip(kekOptions("aes-128-gcm", null), kekOptions("aes-128-gcm", null));
+    }
+
+    @Test
+    void kekKeyIdentifierIsHexDecoded() throws Exception {
+        // The KEK identifier is stored hex-decoded so it matches OpenSSL's OPENSSL_hexstr2buf.
+        byte[] encrypted = encrypt(kekOptions("aes-128-cbc", null), CONTENT);
+        RecipientInformation recipient = new CMSEnvelopedData(encrypted)
+                .getRecipientInfos().getRecipients().iterator().next();
+        KEKRecipientId recipientId = (KEKRecipientId) recipient.getRID();
+        assertArrayEquals(Hex.decode(SECRET_KEY_ID), recipientId.getKeyIdentifier());
     }
 
     @Test

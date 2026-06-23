@@ -69,7 +69,7 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     private String secretKey;
 
     @Option(names = {"--secret-key-id"},
-            description = "KEK recipient: key identifier label, paired with --secret-key.")
+            description = "KEK recipient: key identifier, in hex; paired with --secret-key.")
     private String secretKeyIdentifier;
 
     @Option(names = {"--password"}, description = "Password recipient: password.")

@@ -12,7 +12,6 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
-import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.SecretKey;
@@ -92,7 +91,8 @@ public class RecipientData {
     }
 
     protected byte[] getSecretKeyId() {
-        return Strings.toByteArray(options.getSecretKeyIdentifier());
+        // Hex-decoded to match OpenSSL, which runs -secretkeyid through OPENSSL_hexstr2buf.
+        return Hex.decode(options.getSecretKeyIdentifier());
     }
 
     protected SecretKey getSecretKey() {
