@@ -1,11 +1,16 @@
 package eu.bukka.jcrypto.options;
 
 import java.io.File;
+import java.util.Map;
 
 public interface CMSEnvelopeOptions extends CommonOptions {
     String getAlgorithm();
 
     String getContentType();
+
+    Map<String, String> getAuthenticatedAttributes();
+
+    Map<String, String> getUnauthenticatedAttributes();
 
     String getSecretKey();
 

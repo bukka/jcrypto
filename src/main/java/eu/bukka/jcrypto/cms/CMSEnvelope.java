@@ -1,7 +1,13 @@
 package eu.bukka.jcrypto.cms;
 
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERSet;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.cms.Attribute;
+import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
@@ -13,6 +19,7 @@ import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.io.pem.PemObject;
 
 import java.io.*;
+import java.util.Map;
 
 public class CMSEnvelope extends CMSData {
     private boolean isAuthEnveloped;
@@ -38,9 +45,21 @@ public class CMSEnvelope extends CMSData {
         if (this.isAuthEnveloped) {
             CMSAuthEnvelopedDataGenerator authEnvDataGenerator = new CMSAuthEnvelopedDataGenerator();
             authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
+            if (hasAttributes(options.getAuthenticatedAttributes())) {
+                authEnvDataGenerator.setAuthenticatedAttributeGenerator(
+                        attributeTableGenerator(options.getAuthenticatedAttributes()));
+            }
+            if (hasAttributes(options.getUnauthenticatedAttributes())) {
+                authEnvDataGenerator.setUnauthenticatedAttributeGenerator(
+                        attributeTableGenerator(options.getUnauthenticatedAttributes()));
+            }
             CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor) encryptor);
             encodedData = authEnvData.getEncoded();
         } else {
+            if (hasAttributes(options.getAuthenticatedAttributes())
+                    || hasAttributes(options.getUnauthenticatedAttributes())) {
+                throw new CMSException("Attributes are only supported for authEnveloped-data");
+            }
             CMSEnvelopedDataGenerator envDataGenerator = new CMSEnvelopedDataGenerator();
             envDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
             CMSEnvelopedData envData = envDataGenerator.generate(data, encryptor);
@@ -54,6 +73,19 @@ public class CMSEnvelope extends CMSData {
         } else {
             options.writeOutputData(encodedData);
         }
+    }
+
+    private static boolean hasAttributes(Map<String, String> attributes) {
+        return attributes != null && !attributes.isEmpty();
+    }
+
+    private CMSAttributeTableGenerator attributeTableGenerator(Map<String, String> attributes) {
+        ASN1EncodableVector vector = new ASN1EncodableVector();
+        for (Map.Entry<String, String> attribute : attributes.entrySet()) {
+            vector.add(new Attribute(new ASN1ObjectIdentifier(attribute.getKey()),
+                    new DERSet(new DERUTF8String(attribute.getValue()))));
+        }
+        return new SimpleAttributeTableGenerator(new AttributeTable(vector));
     }
 
     private byte[] convertPemToBer(byte[] pemData) throws IOException {

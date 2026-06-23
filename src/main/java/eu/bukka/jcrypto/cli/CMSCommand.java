@@ -8,6 +8,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true,
@@ -21,6 +22,14 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
 
     @Option(names = {"--content-type"}, description = "Content type to force")
     private String contentType;
+
+    @Option(names = {"--auth-attr"}, description = "Authenticated attribute as OID=value "
+            + "(repeatable, authEnveloped-data only)")
+    private Map<String, String> authenticatedAttributes;
+
+    @Option(names = {"--unauth-attr"}, description = "Unauthenticated attribute as OID=value "
+            + "(repeatable, authEnveloped-data only)")
+    private Map<String, String> unauthenticatedAttributes;
 
     @Option(names = {"--secret-key"}, description = "Secret key for KEK recipient type")
     private String secretKey;
@@ -61,6 +70,16 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Override
     public String getContentType() {
         return contentType;
+    }
+
+    @Override
+    public Map<String, String> getAuthenticatedAttributes() {
+        return authenticatedAttributes;
+    }
+
+    @Override
+    public Map<String, String> getUnauthenticatedAttributes() {
+        return unauthenticatedAttributes;
     }
 
     @Override

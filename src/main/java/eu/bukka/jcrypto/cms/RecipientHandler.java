@@ -36,7 +36,7 @@ public class RecipientHandler extends RecipientData {
     }
 
     private Recipient createRecipientForKEK(boolean isAEAD) throws CMSException {
-        if (isAEAD && options.isStream()) {
+        if (isAEAD) {
             return new JceKEKAuthEnvelopedRecipient(getSecretKey()).setProvider("BC");
         }
         return new JceKEKEnvelopedRecipient(getSecretKey()).setProvider("BC");

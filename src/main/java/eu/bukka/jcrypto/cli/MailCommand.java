@@ -5,6 +5,7 @@ import eu.bukka.jcrypto.options.MailSMIMEEnvelopeOptions;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "mail", mixinStandardHelpOptions = true,
@@ -73,6 +74,16 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     @Override
     public String getContentType() {
         return contentType;
+    }
+
+    @Override
+    public Map<String, String> getAuthenticatedAttributes() {
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getUnauthenticatedAttributes() {
+        return null;
     }
 
     @Override

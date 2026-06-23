@@ -2,9 +2,13 @@ package eu.bukka.jcrypto.cms;
 
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import eu.bukka.jcrypto.test.CommonTest;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.cms.Attribute;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.cms.CMSAuthEnvelopedData;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
@@ -18,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import java.io.File;
 import java.io.FileWriter;
 import java.math.BigInteger;
+import java.util.Map;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
@@ -99,6 +104,40 @@ class CMSEnvelopeTest extends CommonTest {
         // AEAD cipher forced into a plain enveloped-data structure rather than authEnveloped-data.
         assertRoundTrip(kekOptions("aes-128-gcm", "enveloped-data"),
                 kekOptions("aes-128-gcm", "enveloped-data"));
+    }
+
+    // --- authEnveloped-data attributes ---------------------------------------
+
+    private static final String AUTH_ATTR_OID = "1.3.6.1.4.1.99999.1";
+    private static final String UNAUTH_ATTR_OID = "1.3.6.1.4.1.99999.2";
+
+    private String attributeValue(Attribute attribute) {
+        return DERUTF8String.getInstance(attribute.getAttributeValues()[0]).getString();
+    }
+
+    @Test
+    void authEnvelopedCarriesAuthenticatedAndUnauthenticatedAttributes() throws Exception {
+        CMSEnvelopeOptions encryptOptions = kekOptions("aes-128-gcm", null);
+        when(encryptOptions.getAuthenticatedAttributes()).thenReturn(Map.of(AUTH_ATTR_OID, "auth-value"));
+        when(encryptOptions.getUnauthenticatedAttributes()).thenReturn(Map.of(UNAUTH_ATTR_OID, "unauth-value"));
+        byte[] encrypted = encrypt(encryptOptions, CONTENT);
+
+        CMSAuthEnvelopedData authEnvelopedData = new CMSAuthEnvelopedData(encrypted);
+        assertEquals("auth-value",
+                attributeValue(authEnvelopedData.getAuthAttrs().get(new ASN1ObjectIdentifier(AUTH_ATTR_OID))));
+        assertEquals("unauth-value",
+                attributeValue(authEnvelopedData.getUnauthAttrs().get(new ASN1ObjectIdentifier(UNAUTH_ATTR_OID))));
+
+        // attributes must not break the content roundtrip
+        assertArrayEquals(CONTENT, decrypt(kekOptions("aes-128-gcm", null), encrypted));
+    }
+
+    @Test
+    void envelopedDataWithAttributesThrows() {
+        CMSEnvelopeOptions options = kekOptions("aes-128-cbc", null);
+        when(options.getAuthenticatedAttributes()).thenReturn(Map.of(AUTH_ATTR_OID, "auth-value"));
+        CMSException exception = assertThrows(CMSException.class, () -> encrypt(options, CONTENT));
+        assertEquals("Attributes are only supported for authEnveloped-data", exception.getMessage());
     }
 
     // --- KeyTrans (RSA certificate) ------------------------------------------
