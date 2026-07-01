@@ -35,43 +35,55 @@ public class RecipientHandler extends RecipientData {
         }
     }
 
-    private Recipient createRecipientForKEK(boolean isAEAD) throws CMSException {
-        if (isAEAD) {
-            return new JceKEKAuthEnvelopedRecipient(getSecretKey()).setProvider("BC");
+    private Recipient createRecipientForKEK(CMSStructure structure) throws CMSException {
+        switch (structure) {
+            case AUTH_ENVELOPED:
+                return new JceKEKAuthEnvelopedRecipient(getSecretKey()).setProvider("BC");
+            case AUTHENTICATED:
+                return new JceKEKAuthenticatedRecipient(getSecretKey()).setProvider("BC");
+            default:
+                return new JceKEKEnvelopedRecipient(getSecretKey()).setProvider("BC");
         }
-        return new JceKEKEnvelopedRecipient(getSecretKey()).setProvider("BC");
     }
 
-    private Recipient createRecipientForKeyAgree(boolean isAEAD) throws CMSException {
-        if (isAEAD) {
-            return new JceKeyAgreeAuthEnvelopedRecipient(getPrivateKey()).setProvider("BC");
+    private Recipient createRecipientForKeyAgree(CMSStructure structure) throws CMSException {
+        switch (structure) {
+            case AUTH_ENVELOPED:
+                return new JceKeyAgreeAuthEnvelopedRecipient(getPrivateKey()).setProvider("BC");
+            case AUTHENTICATED:
+                return new JceKeyAgreeAuthenticatedRecipient(getPrivateKey()).setProvider("BC");
+            default:
+                return new JceKeyAgreeEnvelopedRecipient(getPrivateKey()).setProvider("BC");
         }
-        return new JceKeyAgreeEnvelopedRecipient(getPrivateKey()).setProvider("BC");
     }
 
-    private Recipient createRecipientForKeyTrans(boolean isAEAD) throws CMSException {
-        if (isAEAD) {
-            return new JceKeyTransAuthEnvelopedRecipient(getPrivateKey()).setProvider("BC");
+    private Recipient createRecipientForKeyTrans(CMSStructure structure) throws CMSException {
+        switch (structure) {
+            case AUTH_ENVELOPED:
+                return new JceKeyTransAuthEnvelopedRecipient(getPrivateKey()).setProvider("BC");
+            case AUTHENTICATED:
+                return new JceKeyTransAuthenticatedRecipient(getPrivateKey()).setProvider("BC");
+            default:
+                return new JceKeyTransEnvelopedRecipient(getPrivateKey()).setProvider("BC");
         }
-        return new JceKeyTransEnvelopedRecipient(getPrivateKey()).setProvider("BC");
     }
 
-    private Recipient createRecipient(boolean isAEAD) throws CMSException {
+    private Recipient createRecipient(CMSStructure structure) throws CMSException {
         if (options.getSecretKey() != null) {
-            return createRecipientForKEK(isAEAD);
+            return createRecipientForKEK(structure);
         }
         if (options.getPrivateKeyFile() == null) {
             throw new CMSException("Private key is required to create recipient");
         }
         if (options.getRecipientCertificateFile() != null) {
-            return createRecipientForKeyAgree(isAEAD);
+            return createRecipientForKeyAgree(structure);
         }
-        return createRecipientForKeyTrans(isAEAD);
+        return createRecipientForKeyTrans(structure);
     }
 
-    public byte[] getContent(RecipientInformationStore recipients, boolean isAEAD) throws CMSException {
+    public byte[] getContent(RecipientInformationStore recipients, CMSStructure structure) throws CMSException {
         RecipientId recipientId = createRecipientId();
         RecipientInformation recipientInformation = recipients.get(recipientId);
-        return recipientInformation.getContent(createRecipient(isAEAD));
+        return recipientInformation.getContent(createRecipient(structure));
     }
 }

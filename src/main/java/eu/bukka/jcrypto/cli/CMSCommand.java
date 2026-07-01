@@ -42,7 +42,10 @@ import java.util.concurrent.Callable;
                 "  authEnveloped-data with attributes (GCM):",
                 "    jcrypto cms encrypt -c aes-128-gcm --secret-key=000102030405060708090a0b0c0d0e0f \\",
                 "      --secret-key-id=C0FEE0 --auth-attr 1.3.6.1.4.1.99999.1=hello \\",
-                "      --unauth-attr 1.3.6.1.4.1.99999.2=world -i in.txt -o out.pem"
+                "      --unauth-attr 1.3.6.1.4.1.99999.2=world -i in.txt -o out.pem",
+                "  authenticated-data (MAC only, HMAC-SHA256):",
+                "    jcrypto cms encrypt --content-type authenticated-data \\",
+                "      --secret-key=000102030405060708090a0b0c0d0e0f --secret-key-id=C0FEE0 -i in.txt -o out.pem"
         })
 public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSEnvelopeOptions {
     @Parameters(index = "0", paramLabel = "<mode>", description = "Operation: encrypt or decrypt")
@@ -53,9 +56,13 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     private String algorithm = "aes-256-cbc";
 
     @Option(names = {"--content-type"},
-            description = "Force output structure for AEAD ciphers: enveloped-data or authEnveloped-data "
-                    + "(default for GCM: authEnveloped-data).")
+            description = "Output structure: enveloped-data, authEnveloped-data (default for GCM) or "
+                    + "authenticated-data (MAC only, no encryption).")
     private String contentType;
+
+    @Option(names = {"--mac-algorithm"},
+            description = "authenticated-data MAC: sha1, sha224, sha256 (default), sha384 or sha512 (HMAC).")
+    private String macAlgorithm;
 
     @Option(names = {"--auth-attr"}, description = "authEnveloped-data only: authenticated attribute as "
             + "OID=value (repeatable); covered by the AEAD tag.")
@@ -111,6 +118,11 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     @Override
     public String getContentType() {
         return contentType;
+    }
+
+    @Override
+    public String getMacAlgorithm() {
+        return macAlgorithm;
     }
 
     @Override

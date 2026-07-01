@@ -9,67 +9,155 @@ import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.cms.Attribute;
 import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
+import org.bouncycastle.cms.jcajce.JceCMSMacCalculatorBuilder;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.operator.DigestCalculator;
+import org.bouncycastle.operator.DigestCalculatorProvider;
+import org.bouncycastle.operator.MacCalculator;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.OutputAEADEncryptor;
 import org.bouncycastle.operator.OutputEncryptor;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.io.pem.PemObject;
 
 import java.io.*;
+import java.security.InvalidParameterException;
 import java.util.Map;
 
 public class CMSEnvelope extends CMSData {
-    private boolean isAuthEnveloped;
+    private CMSStructure structure;
 
     public CMSEnvelope(CMSEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
                        RecipientHandler recipientHandler) {
         super(options, recipientInfoGeneratorFactory, recipientHandler);
+        structure = resolveStructure();
     }
 
     public CMSEnvelope(CMSEnvelopeOptions options) {
         super(options);
-        isAuthEnveloped = getAlgorithm().isAuthenticated() && (
-                options.getContentType() == null || options.getContentType().equals("authEnveloped-data"));
+        structure = resolveStructure();
+    }
+
+    private CMSStructure resolveStructure() {
+        String contentType = options.getContentType();
+        if ("authenticated-data".equals(contentType)) {
+            return CMSStructure.AUTHENTICATED;
+        }
+        if (getAlgorithm().isAuthenticated()
+                && (contentType == null || contentType.equals("authEnveloped-data"))) {
+            return CMSStructure.AUTH_ENVELOPED;
+        }
+        return CMSStructure.ENVELOPED;
     }
 
     public void encrypt() throws IOException, CMSException {
         RecipientInfoGenerator recipientInfoGenerator = recipientInfoGeneratorFactory.create();
+        CMSTypedData data = new CMSProcessableByteArray(options.getInputData());
 
         byte[] encodedData;
-        CMSTypedData data = new CMSProcessableByteArray(options.getInputData());
-        OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(getAlgorithm().getIdentifier())
-                .setProvider("BC").build();
-        if (this.isAuthEnveloped) {
-            CMSAuthEnvelopedDataGenerator authEnvDataGenerator = new CMSAuthEnvelopedDataGenerator();
-            authEnvDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
-            if (hasAttributes(options.getAuthenticatedAttributes())) {
-                authEnvDataGenerator.setAuthenticatedAttributeGenerator(
-                        attributeTableGenerator(options.getAuthenticatedAttributes()));
-            }
-            if (hasAttributes(options.getUnauthenticatedAttributes())) {
-                authEnvDataGenerator.setUnauthenticatedAttributeGenerator(
-                        attributeTableGenerator(options.getUnauthenticatedAttributes()));
-            }
-            CMSAuthEnvelopedData authEnvData = authEnvDataGenerator.generate(data, (OutputAEADEncryptor) encryptor);
-            encodedData = authEnvData.getEncoded();
-        } else {
-            if (hasAttributes(options.getAuthenticatedAttributes())
-                    || hasAttributes(options.getUnauthenticatedAttributes())) {
-                throw new CMSException("Attributes are only supported for authEnveloped-data");
-            }
-            CMSEnvelopedDataGenerator envDataGenerator = new CMSEnvelopedDataGenerator();
-            envDataGenerator.addRecipientInfoGenerator(recipientInfoGenerator);
-            CMSEnvelopedData envData = envDataGenerator.generate(data, encryptor);
-            encodedData = envData.getEncoded();
+        switch (structure) {
+            case AUTH_ENVELOPED:
+                encodedData = generateAuthEnveloped(recipientInfoGenerator, data);
+                break;
+            case AUTHENTICATED:
+                encodedData = generateAuthenticated(recipientInfoGenerator, data);
+                break;
+            default:
+                encodedData = generateEnveloped(recipientInfoGenerator, data);
         }
+        writeEncoded(encodedData);
+    }
+
+    private byte[] generateEnveloped(RecipientInfoGenerator recipientInfoGenerator, CMSTypedData data)
+            throws IOException, CMSException {
+        if (hasAttributes(options.getAuthenticatedAttributes())
+                || hasAttributes(options.getUnauthenticatedAttributes())) {
+            throw new CMSException("Attributes are only supported for authEnveloped-data and authenticated-data");
+        }
+        CMSEnvelopedDataGenerator generator = new CMSEnvelopedDataGenerator();
+        generator.addRecipientInfoGenerator(recipientInfoGenerator);
+        return generator.generate(data, contentEncryptor()).getEncoded();
+    }
+
+    private byte[] generateAuthEnveloped(RecipientInfoGenerator recipientInfoGenerator, CMSTypedData data)
+            throws IOException, CMSException {
+        CMSAuthEnvelopedDataGenerator generator = new CMSAuthEnvelopedDataGenerator();
+        generator.addRecipientInfoGenerator(recipientInfoGenerator);
+        if (hasAttributes(options.getAuthenticatedAttributes())) {
+            generator.setAuthenticatedAttributeGenerator(
+                    attributeTableGenerator(options.getAuthenticatedAttributes()));
+        }
+        if (hasAttributes(options.getUnauthenticatedAttributes())) {
+            generator.setUnauthenticatedAttributeGenerator(
+                    attributeTableGenerator(options.getUnauthenticatedAttributes()));
+        }
+        return generator.generate(data, (OutputAEADEncryptor) contentEncryptor()).getEncoded();
+    }
+
+    private byte[] generateAuthenticated(RecipientInfoGenerator recipientInfoGenerator, CMSTypedData data)
+            throws IOException, CMSException {
+        CMSAuthenticatedDataGenerator generator = new CMSAuthenticatedDataGenerator();
+        generator.addRecipientInfoGenerator(recipientInfoGenerator);
+        if (hasAttributes(options.getAuthenticatedAttributes())) {
+            generator.setAuthenticatedAttributeGenerator(
+                    attributeTableGenerator(options.getAuthenticatedAttributes()));
+        }
+        if (hasAttributes(options.getUnauthenticatedAttributes())) {
+            generator.setUnauthenticatedAttributeGenerator(
+                    attributeTableGenerator(options.getUnauthenticatedAttributes()));
+        }
+        MacCalculator macCalculator = new JceCMSMacCalculatorBuilder(getMacAlgorithm()).setProvider("BC").build();
+        if (hasAttributes(options.getAuthenticatedAttributes())) {
+            // Authenticated attributes carry a message-digest of the content that the MAC covers,
+            // so a digest calculator is required to build them.
+            return generator.generate(data, macCalculator, digestCalculator()).getEncoded();
+        }
+        return generator.generate(data, macCalculator).getEncoded();
+    }
+
+    private OutputEncryptor contentEncryptor() throws CMSException {
+        return new JceCMSContentEncryptorBuilder(getAlgorithm().getIdentifier()).setProvider("BC").build();
+    }
+
+    private ASN1ObjectIdentifier getMacAlgorithm() {
+        String macAlgorithm = options.getMacAlgorithm();
+        if (macAlgorithm == null) {
+            return PKCSObjectIdentifiers.id_hmacWithSHA256;
+        }
+        switch (macAlgorithm.toUpperCase().replace("-", "").replace("_", "")) {
+            case "HMACSHA1":
+            case "SHA1":
+                return PKCSObjectIdentifiers.id_hmacWithSHA1;
+            case "HMACSHA224":
+            case "SHA224":
+                return PKCSObjectIdentifiers.id_hmacWithSHA224;
+            case "HMACSHA256":
+            case "SHA256":
+                return PKCSObjectIdentifiers.id_hmacWithSHA256;
+            case "HMACSHA384":
+            case "SHA384":
+                return PKCSObjectIdentifiers.id_hmacWithSHA384;
+            case "HMACSHA512":
+            case "SHA512":
+                return PKCSObjectIdentifiers.id_hmacWithSHA512;
+            default:
+                throw new InvalidParameterException("Invalid MAC algorithm " + macAlgorithm);
+        }
+    }
+
+    private void writeEncoded(byte[] encodedData) throws IOException {
         if (getForm() == Form.PEM) {
-            ContentInfo ci = ContentInfo.getInstance(ASN1Sequence.fromByteArray(encodedData));
-            JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
-            writer.writeObject(ci);
-            writer.close();
+            ContentInfo contentInfo = ContentInfo.getInstance(ASN1Sequence.fromByteArray(encodedData));
+            try (JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()))) {
+                writer.writeObject(contentInfo);
+            }
         } else {
             options.writeOutputData(encodedData);
         }
@@ -98,27 +186,44 @@ public class CMSEnvelope extends CMSData {
         }
     }
 
-    private RecipientInformationStore getDataRecipients() throws IOException, CMSException {
-        byte[] inputData = options.getInputData();
-        if (getForm() == Form.PEM) {
-            inputData = convertPemToBer(inputData);
+    private RecipientInformationStore getDataRecipients(byte[] inputData) throws CMSException {
+        switch (structure) {
+            case AUTH_ENVELOPED:
+                return new CMSAuthEnvelopedData(inputData).getRecipientInfos();
+            case AUTHENTICATED:
+                return new CMSAuthenticatedData(inputData, digestCalculatorProvider()).getRecipientInfos();
+            default:
+                return new CMSEnvelopedData(inputData).getRecipientInfos();
         }
-        if (this.isAuthEnveloped) {
-            CMSAuthEnvelopedData authEnvelopedData = new CMSAuthEnvelopedData(inputData);
-            return authEnvelopedData.getRecipientInfos();
-        } else {
-            CMSEnvelopedData envelopedData = new CMSEnvelopedData(inputData);
-            return envelopedData.getRecipientInfos();
+    }
+
+    private DigestCalculatorProvider digestCalculatorProvider() throws CMSException {
+        try {
+            return new JcaDigestCalculatorProviderBuilder().setProvider("BC").build();
+        } catch (OperatorCreationException e) {
+            throw new CMSException("Failed to create digest calculator provider", e);
+        }
+    }
+
+    private DigestCalculator digestCalculator() throws CMSException {
+        try {
+            return digestCalculatorProvider().get(new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256));
+        } catch (OperatorCreationException e) {
+            throw new CMSException("Failed to create digest calculator", e);
         }
     }
 
     public void decrypt() throws IOException, CMSException {
-        RecipientInformationStore recipients = getDataRecipients();
-        byte[] decryptedData = recipientHandler.getContent(recipients, this.isAuthEnveloped);
+        byte[] inputData = options.getInputData();
         if (getForm() == Form.PEM) {
-            JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()));
-            writer.write(Strings.fromByteArray(decryptedData));
-            writer.close();
+            inputData = convertPemToBer(inputData);
+        }
+        RecipientInformationStore recipients = getDataRecipients(inputData);
+        byte[] decryptedData = recipientHandler.getContent(recipients, structure);
+        if (getForm() == Form.PEM) {
+            try (JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()))) {
+                writer.write(Strings.fromByteArray(decryptedData));
+            }
         } else {
             options.writeOutputData(decryptedData);
         }

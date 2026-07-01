@@ -5,14 +5,17 @@ import eu.bukka.jcrypto.test.CommonTest;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.cms.Attribute;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.cms.CMSAuthEnvelopedData;
+import org.bouncycastle.cms.CMSAuthenticatedData;
 import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.KEKRecipientId;
 import org.bouncycastle.cms.RecipientInformation;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
@@ -151,7 +154,8 @@ class CMSEnvelopeTest extends CommonTest {
         CMSEnvelopeOptions options = kekOptions("aes-128-cbc", null);
         when(options.getAuthenticatedAttributes()).thenReturn(Map.of(AUTH_ATTR_OID, "auth-value"));
         CMSException exception = assertThrows(CMSException.class, () -> encrypt(options, CONTENT));
-        assertEquals("Attributes are only supported for authEnveloped-data", exception.getMessage());
+        assertEquals("Attributes are only supported for authEnveloped-data and authenticated-data",
+                exception.getMessage());
     }
 
     // --- KeyTrans (RSA certificate) ------------------------------------------
@@ -208,6 +212,62 @@ class CMSEnvelopeTest extends CommonTest {
         Identity recipient = newIdentity("EC");
         assertRoundTrip(keyAgreeEncryptOptions("aes-128-gcm", sender, recipient),
                 keyAgreeDecryptOptions("aes-128-gcm", recipient));
+    }
+
+    // --- authenticated-data (MAC only) ---------------------------------------
+
+    private CMSEnvelopeOptions authenticated(CMSEnvelopeOptions options) {
+        when(options.getContentType()).thenReturn("authenticated-data");
+        return options;
+    }
+
+    @Test
+    void authenticatedKekHmacSha256() throws Exception {
+        assertRoundTrip(authenticated(kekOptions("aes-128-cbc", "authenticated-data")),
+                authenticated(kekOptions("aes-128-cbc", "authenticated-data")));
+    }
+
+    @Test
+    void authenticatedKeyTrans() throws Exception {
+        Identity recipient = newIdentity("RSA");
+        assertRoundTrip(authenticated(keyTransOptions("aes-128-cbc", recipient)),
+                authenticated(keyTransOptions("aes-128-cbc", recipient)));
+    }
+
+    @Test
+    void authenticatedKeyAgree() throws Exception {
+        Identity sender = newIdentity("EC");
+        Identity recipient = newIdentity("EC");
+        assertRoundTrip(authenticated(keyAgreeEncryptOptions("aes-128-cbc", sender, recipient)),
+                authenticated(keyAgreeDecryptOptions("aes-128-cbc", recipient)));
+    }
+
+    @Test
+    void authenticatedUsesConfiguredMacAlgorithm() throws Exception {
+        CMSEnvelopeOptions encryptOptions = authenticated(kekOptions("aes-128-cbc", "authenticated-data"));
+        when(encryptOptions.getMacAlgorithm()).thenReturn("sha512");
+        byte[] encrypted = encrypt(encryptOptions, CONTENT);
+
+        assertEquals(PKCSObjectIdentifiers.id_hmacWithSHA512.getId(),
+                new CMSAuthenticatedData(encrypted).getMacAlgOID());
+        assertArrayEquals(CONTENT, decrypt(authenticated(kekOptions("aes-128-cbc", "authenticated-data")), encrypted));
+    }
+
+    @Test
+    void authenticatedCarriesAttributes() throws Exception {
+        CMSEnvelopeOptions encryptOptions = authenticated(kekOptions("aes-128-cbc", "authenticated-data"));
+        when(encryptOptions.getAuthenticatedAttributes()).thenReturn(Map.of(AUTH_ATTR_OID, "auth-value"));
+        when(encryptOptions.getUnauthenticatedAttributes()).thenReturn(Map.of(UNAUTH_ATTR_OID, "unauth-value"));
+        byte[] encrypted = encrypt(encryptOptions, CONTENT);
+
+        CMSAuthenticatedData authenticatedData = new CMSAuthenticatedData(encrypted,
+                new JcaDigestCalculatorProviderBuilder().setProvider("BC").build());
+        assertEquals("auth-value",
+                attributeValue(authenticatedData.getAuthAttrs().get(new ASN1ObjectIdentifier(AUTH_ATTR_OID))));
+        assertEquals("unauth-value",
+                attributeValue(authenticatedData.getUnauthAttrs().get(new ASN1ObjectIdentifier(UNAUTH_ATTR_OID))));
+
+        assertArrayEquals(CONTENT, decrypt(authenticated(kekOptions("aes-128-cbc", "authenticated-data")), encrypted));
     }
 
     // --- error handling -------------------------------------------------------

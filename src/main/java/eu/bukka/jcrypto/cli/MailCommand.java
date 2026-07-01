@@ -97,6 +97,11 @@ public class MailCommand extends CommonCommand implements Callable<Integer>, Mai
     }
 
     @Override
+    public String getMacAlgorithm() {
+        return null;
+    }
+
+    @Override
     public Map<String, String> getAuthenticatedAttributes() {
         return null;
     }

@@ -8,6 +8,8 @@ public interface CMSEnvelopeOptions extends CommonOptions {
 
     String getContentType();
 
+    String getMacAlgorithm();
+
     Map<String, String> getAuthenticatedAttributes();
 
     Map<String, String> getUnauthenticatedAttributes();

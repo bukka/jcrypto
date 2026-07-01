@@ -1,5 +1,6 @@
 package eu.bukka.jcrypto.mail.smime;
 
+import eu.bukka.jcrypto.cms.CMSStructure;
 import eu.bukka.jcrypto.cms.RecipientHandler;
 import eu.bukka.jcrypto.cms.RecipientInfoGeneratorFactory;
 import eu.bukka.jcrypto.bc.mail.smime.SMIMEAuthEnveloped;
@@ -126,7 +127,9 @@ public class SMIMEEnvelope extends SMIMEData {
         MimeMessage msg = new MimeMessage(session, new ByteArrayInputStream(options.getInputData()));
 
         RecipientInformationStore recipients = getDataRecipients(msg);
-        byte[] decryptedData = recipientHandler.getContent(recipients, getAlgorithm().isAuthenticated());
+        CMSStructure structure = getAlgorithm().isAuthenticated()
+                ? CMSStructure.AUTH_ENVELOPED : CMSStructure.ENVELOPED;
+        byte[] decryptedData = recipientHandler.getContent(recipients, structure);
         options.writeOutputData(decryptedData);
     }
 }
