@@ -3,7 +3,6 @@ package eu.bukka.jcrypto.cms;
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.cms.Attribute;
@@ -154,9 +153,9 @@ public class CMSEnvelope extends CMSData {
 
     private void writeEncoded(byte[] encodedData) throws IOException {
         if (getForm() == Form.PEM) {
-            ContentInfo contentInfo = ContentInfo.getInstance(ASN1Sequence.fromByteArray(encodedData));
+            // Use the "CMS" PEM label to match OpenSSL; BouncyCastle would otherwise write "PKCS7".
             try (JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()))) {
-                writer.writeObject(contentInfo);
+                writer.writeObject(new PemObject("CMS", encodedData));
             }
         } else {
             options.writeOutputData(encodedData);
