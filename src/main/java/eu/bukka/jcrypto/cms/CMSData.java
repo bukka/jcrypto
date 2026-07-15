@@ -7,13 +7,6 @@ import org.bouncycastle.cms.CMSAlgorithm;
 import java.security.InvalidParameterException;
 
 abstract public class CMSData extends CMSBase {
-    protected CMSEnvelopeOptions options;
-
-    protected enum Form {
-        DER,
-        PEM,
-    }
-
     protected static class Algorithm {
         private final ASN1ObjectIdentifier identifier;
         private final boolean authenticated;
@@ -39,13 +32,11 @@ abstract public class CMSData extends CMSBase {
 
     public CMSData(CMSEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
                    RecipientHandler recipientHandler) {
-        super(recipientInfoGeneratorFactory, recipientHandler);
-        this.options = options;
+        super(options, recipientInfoGeneratorFactory, recipientHandler);
     }
 
     public CMSData(CMSEnvelopeOptions options) {
         super(options);
-        this.options = options;
     }
 
     protected Algorithm getAlgorithm(String algorithm) {
@@ -69,18 +60,5 @@ abstract public class CMSData extends CMSBase {
 
     protected Algorithm getAlgorithm() {
         return getAlgorithm(options.getAlgorithm().toUpperCase());
-    }
-
-    protected Form getForm() {
-        String form = options.getForm();
-        switch (form) {
-            case "BER": // We treat BER as DER for now
-            case "DER":
-                return Form.DER;
-            case "PEM":
-                return Form.PEM;
-            default:
-                throw new InvalidParameterException("Invalid form " + form);
-        }
     }
 }

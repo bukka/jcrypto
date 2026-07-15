@@ -7,4 +7,5 @@ public enum CMSStructure {
     ENVELOPED,
     AUTH_ENVELOPED,
     AUTHENTICATED,
+    SIGNED,
 }

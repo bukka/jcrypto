@@ -14,7 +14,6 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSMacCalculatorBuilder;
-import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.DigestCalculator;
 import org.bouncycastle.operator.DigestCalculatorProvider;
@@ -24,7 +23,6 @@ import org.bouncycastle.operator.OutputAEADEncryptor;
 import org.bouncycastle.operator.OutputEncryptor;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Strings;
-import org.bouncycastle.util.io.pem.PemObject;
 
 import java.io.*;
 import java.security.InvalidParameterException;
@@ -151,17 +149,6 @@ public class CMSEnvelope extends CMSData {
         }
     }
 
-    private void writeEncoded(byte[] encodedData) throws IOException {
-        if (getForm() == Form.PEM) {
-            // Use the "CMS" PEM label to match OpenSSL; BouncyCastle would otherwise write "PKCS7".
-            try (JcaPEMWriter writer = new JcaPEMWriter(new FileWriter(options.getOutputFile()))) {
-                writer.writeObject(new PemObject("CMS", encodedData));
-            }
-        } else {
-            options.writeOutputData(encodedData);
-        }
-    }
-
     private static boolean hasAttributes(Map<String, String> attributes) {
         return attributes != null && !attributes.isEmpty();
     }
@@ -173,16 +160,6 @@ public class CMSEnvelope extends CMSData {
                     new DERSet(new DERUTF8String(attribute.getValue()))));
         }
         return new SimpleAttributeTableGenerator(new AttributeTable(vector));
-    }
-
-    private byte[] convertPemToBer(byte[] pemData) throws IOException {
-        try (PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(pemData)))) {
-            PemObject pemObject = pemParser.readPemObject();
-            if (pemObject == null) {
-                throw new IOException("Invalid PEM data");
-            }
-            return pemObject.getContent();
-        }
     }
 
     private RecipientInformationStore getDataRecipients(byte[] inputData) throws CMSException {

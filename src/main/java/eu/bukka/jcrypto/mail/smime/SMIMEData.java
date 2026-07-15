@@ -46,7 +46,7 @@ abstract public class SMIMEData extends CMSBase {
 
     public SMIMEData(MailSMIMEEnvelopeOptions options, RecipientInfoGeneratorFactory recipientInfoGeneratorFactory,
                      RecipientHandler recipientHandler) {
-        super(recipientInfoGeneratorFactory, recipientHandler);
+        super(options, recipientInfoGeneratorFactory, recipientHandler);
         this.options = options;
     }
 

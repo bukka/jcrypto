@@ -1,7 +1,9 @@
 package eu.bukka.jcrypto.cli;
 
 import eu.bukka.jcrypto.cms.CMSEnvelope;
+import eu.bukka.jcrypto.cms.CMSSignature;
 import eu.bukka.jcrypto.options.CMSEnvelopeOptions;
+import eu.bukka.jcrypto.options.CMSSignatureOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -13,14 +15,17 @@ import java.util.concurrent.Callable;
 
 @Command(name = "cms", mixinStandardHelpOptions = true, showDefaultValues = true, usageHelpWidth = 100,
         description = {
-                "Generate and open RFC 5652 CMS enveloped-data and authEnveloped-data.",
-                "The recipient type is selected by which options you provide:",
+                "Generate and open RFC 5652 CMS enveloped-data, authEnveloped-data and signed-data.",
+                "Modes: encrypt, decrypt, sign, verify.",
+                "For encrypt/decrypt the recipient type is selected by which options you provide:",
                 "  KEK       --secret-key + --secret-key-id",
                 "  KeyTrans  --cert (encrypt), --cert + --private-key (decrypt)",
                 "  KeyAgree  --sender-cert + --private-key + --recipient-cert (encrypt),",
                 "            --recipient-cert + --private-key (decrypt)",
                 "  Password  --password",
-                "An AEAD cipher (GCM) produces authEnveloped-data unless --content-type overrides it."
+                "An AEAD cipher (GCM) produces authEnveloped-data unless --content-type overrides it.",
+                "For sign use --signer-cert + --private-key; verify uses the embedded certificate "
+                        + "unless --signer-cert is given."
         },
         footer = {
                 "",
@@ -45,9 +50,17 @@ import java.util.concurrent.Callable;
                 "      --unauth-attr 1.3.6.1.4.1.99999.2=world -i in.txt -o out.pem",
                 "  authenticated-data (MAC only, HMAC-SHA256):",
                 "    jcrypto cms encrypt --content-type authenticated-data \\",
-                "      --secret-key=000102030405060708090a0b0c0d0e0f --secret-key-id=C0FEE0 -i in.txt -o out.pem"
+                "      --secret-key=000102030405060708090a0b0c0d0e0f --secret-key-id=C0FEE0 -i in.txt -o out.pem",
+                "  signed-data (encapsulated):",
+                "    jcrypto cms sign --signer-cert signer.pem --private-key signer.key -i in.txt -o out.pem",
+                "    jcrypto cms verify -i out.pem -o verified.txt",
+                "  signed-data (detached):",
+                "    jcrypto cms sign --detached --signer-cert signer.pem --private-key signer.key \\",
+                "      -i in.txt -o sig.pem",
+                "    jcrypto cms verify --detached --content in.txt -i sig.pem -o verified.txt"
         })
-public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSEnvelopeOptions {
+public class CMSCommand extends CommonCommand
+        implements Callable<Integer>, CMSEnvelopeOptions, CMSSignatureOptions {
     @Parameters(index = "0", paramLabel = "<mode>", description = "Operation: encrypt or decrypt")
     private String mode;
 
@@ -88,6 +101,24 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
 
     @Option(names = {"--cert"}, description = "KeyTrans recipient: recipient certificate (PEM).")
     private File certificateFile;
+
+    @Option(names = {"--signer-cert"},
+            description = "sign: signer certificate (PEM), embedded in the SignedData; "
+                    + "verify: certificate to verify against (defaults to the embedded certificate).")
+    private File signerCertificateFile;
+
+    @Option(names = {"--digest", "--md"},
+            description = "sign: signature digest: sha1, sha224, sha256 (default), sha384 or sha512.")
+    private String digestAlgorithm;
+
+    @Option(names = {"--detached"},
+            description = "sign: produce a detached signature (content not encapsulated); "
+                    + "verify: expects the content via --content.")
+    private boolean detached = false;
+
+    @Option(names = {"--content"},
+            description = "verify: original content file for a detached signature.")
+    private File contentFile;
 
     @CommandLine.Option(names = {"--sender-cert"},
             description = "KeyAgree recipient: sender/originator certificate (PEM).")
@@ -161,6 +192,26 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
     }
 
     @Override
+    public File getSignerCertificateFile() {
+        return signerCertificateFile;
+    }
+
+    @Override
+    public String getDigestAlgorithm() {
+        return digestAlgorithm;
+    }
+
+    @Override
+    public boolean isDetached() {
+        return detached;
+    }
+
+    @Override
+    public File getContentFile() {
+        return contentFile;
+    }
+
+    @Override
     public File getRecipientCertificateFile() {
         return recipientCertificateFile;
     }
@@ -194,6 +245,12 @@ public class CMSCommand extends CommonCommand implements Callable<Integer>, CMSE
                 break;
             case "decrypt":
                 new CMSEnvelope(this).decrypt();
+                break;
+            case "sign":
+                new CMSSignature(this).sign();
+                break;
+            case "verify":
+                new CMSSignature(this).verify();
                 break;
             default:
                 throw new Exception("Unknown CMS mode: " + mode);
