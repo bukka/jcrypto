@@ -2,8 +2,10 @@ package eu.bukka.jcrypto.cms;
 
 import eu.bukka.jcrypto.options.CMSSignatureOptions;
 import eu.bukka.jcrypto.test.CommonTest;
+import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.cms.CMSException;
@@ -105,6 +107,24 @@ class CMSSignatureTest extends CommonTest {
         assertRoundTrip("Ed25519");
     }
 
+    @Test
+    void signVerifyEd448() throws Exception {
+        assertRoundTrip("Ed448");
+    }
+
+    @Test
+    void ed448UsesRfc8419Shake256LenDigest() throws Exception {
+        // RFC 8419: when signing with Ed448 the digestAlgorithm MUST be id-shake256-len with the
+        // parameters present and set to 512.
+        Identity signer = newIdentity("Ed448");
+        byte[] signed = sign(signOptions(signer), CONTENT);
+
+        SignerInformation signerInfo = new CMSSignedData(signed).getSignerInfos().getSigners().iterator().next();
+        AlgorithmIdentifier digestAlgorithm = signerInfo.getDigestAlgorithmID();
+        assertEquals(NISTObjectIdentifiers.id_shake256_len, digestAlgorithm.getAlgorithm());
+        assertEquals(512, ASN1Integer.getInstance(digestAlgorithm.getParameters()).intValueExact());
+    }
+
     // --- digest selection -----------------------------------------------------
 
     @Test
@@ -203,6 +223,8 @@ class CMSSignatureTest extends CommonTest {
                 return "SHA256withDSA";
             case "Ed25519":
                 return "Ed25519";
+            case "Ed448":
+                return "Ed448";
             default:
                 throw new IllegalArgumentException("Unsupported key type " + keyType);
         }
@@ -215,6 +237,7 @@ class CMSSignatureTest extends CommonTest {
                 generator.initialize(new ECGenParameterSpec("prime256v1"));
                 break;
             case "Ed25519":
+            case "Ed448":
                 break;
             default:
                 generator.initialize(2048);
