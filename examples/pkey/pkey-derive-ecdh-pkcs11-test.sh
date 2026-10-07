@@ -18,9 +18,9 @@ jcrypto_out_pub_key_file="$jcrypto_tmp_dir/out-pkey-p11-ec-${jcrypto_curve_name}
 jcrypto_pkcs11_setup pkey-sign-verify
 
 echo "JCRYPTO GENERATE KEY"
-jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --private-key-alias JavaTestDeriveECKey \
+jcrypto pkey generate --public-key-file "$jcrypto_out_pub_key_file" --form DER --private-key-alias JavaTestDeriveECKey \
   --key-store-password 1234 --key-store-name PKCS11 --algorithm EC --parameters $jcrypto_curve_name \
-  --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_java_config"
+  --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_key_management_java_config"
 
 jcrypto_cat_b64 "$jcrypto_out_pub_key_file"
 

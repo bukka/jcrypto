@@ -1,5 +1,6 @@
 name = __PKCS11_NAME__
 library = __PKCS11_LIBRARY__
+slotListIndex = __PKCS11_SLOT_LIST_INDEX__
 attributes(*, CKO_PRIVATE_KEY, *) = {
     CKA_SIGN = true
     CKA_DECRYPT = true

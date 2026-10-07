@@ -16,7 +16,7 @@ jcrypto_pkcs11_setup pkey-complete
 echo "JCRYPTO GENERATE KEY"
 jcrypto pkey generate --private-key-alias JavaTestCompleteECKey \
   --key-store-password 1234 --key-store-name PKCS11 --algorithm EC --parameters $jcrypto_curve_name \
-  --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_java_config"
+  --provider-name SunPKCS11 --provider-config-file "$jcrypto_pkcs11_key_management_java_config"
 
 echo "JCRYPTO SIGN"
 jcrypto pkey sign -i "$jcrypto_this_dir/in-pkey-data.txt" -a SHA256withECDSA -o "$jcrypto_out_sig_file" \

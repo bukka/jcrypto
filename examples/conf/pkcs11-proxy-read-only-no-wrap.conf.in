@@ -1,0 +1,2 @@
+read_only_sessions = true
+disabled_functions = C_WrapKey

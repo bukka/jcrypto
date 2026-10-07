@@ -26,6 +26,14 @@ if [[ "$JCRYPTO_PKCS11_PROXY" == "tls" ]]; then
 fi
 jcrypto_pkcs11_proxy_socket="$jcrypto_pkcs11_proxy_protocol://127.0.0.1:2346"
 
+jcrypto_pkcs11_default_token_label="jCryptoTestDefaultToken"
+# JCRYPTO_PKCS11_SOFTHSM2_LIBRARY selects the SoftHSM2 library explicitly
+jcrypto_pkcs11_softhsm2_default_paths=(
+  "$JCRYPTO_PKCS11_SOFTHSM2_LIBRARY"
+  "/usr/local/lib/softhsm/libsofthsm2.so"
+  "/usr/lib/softhsm/libsofthsm2.so"
+)
+
 function jcrypto {
   echo jcrypto $@
   $jcrypto_cmd $@
@@ -81,14 +89,54 @@ function jcrypto_find_first_existing_path {
   return 1
 }
 
+# SoftHSM2 config of the tokens behind the current setup. In proxy mode the
+# daemon must have been started with the same test name.
+function jcrypto_pkcs11_softhsm2_conf_path {
+  if [ -n "$SOFTHSM2_CONF" ]; then
+    echo "$SOFTHSM2_CONF"
+  else
+    echo "$jcrypto_pkcs11_prefix-softhsm2.conf"
+  fi
+}
+
+# SoftHSM2 assigns random slot IDs, so the position of a token in the slot
+# list differs between setups and has to be looked up by label.
+function jcrypto_pkcs11_slot_list_index {
+  local label="$1"
+  local conf
+  conf="$(jcrypto_pkcs11_softhsm2_conf_path)"
+  if [ ! -f "$conf" ]; then
+    echo "Warning: SoftHSM2 config $conf not found, using slot list index 0" >&2
+    echo 0
+    return
+  fi
+  SOFTHSM2_CONF="$conf" softhsm2-util --show-slots | sed -n 's/^ *Label: *//p' | sed 's/ *$//' \
+    | awk -v label="$label" 'BEGIN { index_found = 0 } $0 == label { print NR - 1; index_found = 1; exit } END { if (!index_found) print 0 }'
+}
+
 function jcrypto_pkcs11_make_java_config {
   jcrypto_pkcs11_name=$1
   jcrypto_pkcs11_library="$2"
-  jcrypto_pkcs11_java_config="$jcrypto_pkcs11_prefix-pkcs11.cfg"
+  jcrypto_pkcs11_java_config="${3:-$jcrypto_pkcs11_prefix-pkcs11.cfg}"
+  jcrypto_pkcs11_slot_index="$(jcrypto_pkcs11_slot_list_index "$jcrypto_pkcs11_default_token_label")"
 
   # Create config for SunPKCS11 Java provider
   sed "s|__PKCS11_LIBRARY__|$jcrypto_pkcs11_library|g" "$jcrypto_conf_dir/pkcs11.cfg.in" > "$jcrypto_pkcs11_java_config"
   sed -i "s|__PKCS11_NAME__|$jcrypto_pkcs11_name|g" "$jcrypto_pkcs11_java_config"
+  sed -i "s|__PKCS11_SLOT_LIST_INDEX__|$jcrypto_pkcs11_slot_index|g" "$jcrypto_pkcs11_java_config"
+}
+
+# Key management goes directly to SoftHSM2 when the proxy only allows
+# read-only sessions, the same way an administrator would do it.
+function jcrypto_pkcs11_key_management_setup {
+  jcrypto_pkcs11_key_management_java_config="$jcrypto_pkcs11_java_config"
+  if [[ "$jcrypto_pkcs11_type" == "proxy" && "$JCRYPTO_PKCS11_PROXY_CONF" == read-only* ]]; then
+    export SOFTHSM2_CONF="$(jcrypto_pkcs11_softhsm2_conf_path)"
+    jcrypto_pkcs11_softhsm2_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_softhsm2_default_paths)
+    jcrypto_pkcs11_key_management_java_config="$jcrypto_pkcs11_prefix-admin-pkcs11.cfg"
+    jcrypto_pkcs11_make_java_config SoftHSM2 "$jcrypto_pkcs11_softhsm2_library" "$jcrypto_pkcs11_key_management_java_config"
+    echo "Using key management PKCS11_LIBRARY=$jcrypto_pkcs11_softhsm2_library"
+  fi
 }
 
 function jcrypto_pkcs11_softhsm2_init_token {
@@ -125,11 +173,6 @@ function jcrypto_pkcs11_softhsm2_setup {
     # Find and check PKCS#11 name and library
     jcrypto_pkcs11_name=SoftHSM2
     echo "Using PKCS11_NAME=$jcrypto_pkcs11_name"
-    jcrypto_pkcs11_softhsm2_default_paths=(
-      "/usr/local/lib/softhsm/libsofthsm2.so"
-      "/usr/lib/softhsm/libsofthsm2.so"
-    )
-
     jcrypto_pkcs11_softhsm2_library=$(jcrypto_find_first_existing_path jcrypto_pkcs11_softhsm2_default_paths)
     if [ $? -ne 0 ]; then
       echo "Error: PKCS#11 module not found in default paths."
@@ -160,8 +203,8 @@ function jcrypto_pkcs11_proxy_conf_setup {
     if [ -f "$jcrypto_pkcs11_proxy_conf_in" ]; then
       jcrypto_pkcs11_proxy_conf="$jcrypto_tmp_dir/pkcs11-proxy-$JCRYPTO_PKCS11_PROXY_CONF.conf"
       cp "$jcrypto_pkcs11_proxy_conf_in" "$jcrypto_pkcs11_proxy_conf"
-      export PKCS11_PROXY_CONF_FILE="$jcrypto_pkcs11_proxy_conf"
-      echo "Using PKCS11_PROXY_CONF_FILE=$jcrypto_pkcs11_proxy_conf"
+      export PKCS11_PROXY_CONF_PATH="$jcrypto_pkcs11_proxy_conf"
+      echo "Using PKCS11_PROXY_CONF_PATH=$jcrypto_pkcs11_proxy_conf"
     else
       echo "Error: PKCS#11 proxy conf $jcrypto_pkcs11_proxy_conf_in not found."
       exit 1
@@ -228,6 +271,7 @@ function jcrypto_pkcs11_setup {
   fi
 
   jcrypto_pkcs11_make_java_config $jcrypto_pkcs11_name "$jcrypto_pkcs11_library"
+  jcrypto_pkcs11_key_management_setup
 }
 
 function jcrypto_pkcs11_generate_key {

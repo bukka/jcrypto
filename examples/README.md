@@ -276,3 +276,27 @@ using CTRL+C and then started again but without recreating the keys:
 ```shell
 PKCS11_KEYS_REUSE=1 ./run-pkcs11-proxy-daemon.sh  pkey-server
 ```
+
+#### PKCS11-PROXY daemon configuration
+
+The daemon can be started with one of the configuration templates from `conf/pkcs11-proxy-*.conf.in`
+by setting `JCRYPTO_PKCS11_PROXY_CONF` to the part of the name between `pkcs11-proxy-` and `.conf.in`.
+The same variable should be set for the tests so they know what the daemon allows. For example the
+read-only setup, where the daemon only opens read-only sessions in SoftHSM2, is started as
+
+```shell
+JCRYPTO_PKCS11_PROXY_CONF=read-only ./run-pkcs11-proxy-daemon.sh pkey-sign-verify
+```
+
+and the ECDH derive test is then run from examples/pkey/ as
+
+```shell
+JCRYPTO_PKCS11_PROXY=1 JCRYPTO_PKCS11_PROXY_CONF=read-only ./pkey-derive-ecdh-pkcs11-test.sh
+```
+
+Keys cannot be created through a read-only proxy, so the tests create them directly in SoftHSM2 the
+way an administrator would. This requires the daemon to be started with the same test name as the
+test uses, so both work with the same tokens.
+
+The SoftHSM2 library is found in the default locations and can be selected explicitly with
+`JCRYPTO_PKCS11_SOFTHSM2_LIBRARY`.
